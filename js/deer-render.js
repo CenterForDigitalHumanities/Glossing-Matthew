@@ -13,6 +13,7 @@
 
 import { default as UTILS } from './deer-utils.js'
 import { default as config } from './deer-config.js'
+import { OpenSeadragon} from './openseadragon.js'
 
 const changeLoader = new MutationObserver(renderChange)
 var DEER = config
@@ -70,6 +71,7 @@ RENDER.element = function (elem, obj) {
             collection: elem.getAttribute(DEER.COLLECTION),
             key: elem.getAttribute(DEER.KEY),
             label: elem.getAttribute(DEER.LABEL),
+            index: elem.getAttribute("deer-index"),
             config: DEER
         }
         let templateResponse = template(obj, options)
@@ -163,37 +165,167 @@ DEER.TEMPLATES.linky = function (obj, options = {}) {
     }
 }
 
-DEER.TEMPLATES.thumbs = function(obj, options = {}) {
+DEER.TEMPLATES.thumbs = function (obj, options = {}) {
     return {
-        html: obj["tpen://base-project"]?`<div class="is-full-width"> <h3> ... loading images ... </h3> </div>`:``,
-        then: (elem)=>{
-            fetch("http://t-pen.org/TPEN/manifest/"+obj["tpen://base-project"].value)
-            .then(response => response.json())
-            .then(ms => elem.innerHTML = `
-                ${ms.sequences[0].canvases.slice(0,10).reduce((a,b)=>a+=`<img class="thumbnail" src="${b.images[0].resource['@id']}">`,``)}
-        `)} 
+        html: obj["tpen://base-project"] ? `<div class="is-full-width"> <h3> ... loading images ... </h3> </div>` : ``,
+        then: (elem) => {
+            fetch("http://t-pen.org/TPEN/manifest/" + obj["tpen://base-project"].value)
+                .then(response => response.json())
+                .then(ms => elem.innerHTML = `
+                ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `<img class="thumbnail" src="${b.images[0].resource['@id']}">`, ``)}
+        `)
+        }
     }
 }
 
-DEER.TEMPLATES.folioTranscription = function(obj, options = {}) {
+DEER.TEMPLATES.pageLinks = function (obj, options = {}) {
+    return obj.sequences[0].canvases.reduce((a, b, i) => a += `<a class="button" href="?page=${i + 1}#${obj["@id"]}">${b.label}</a>`, ``)
+}
+
+DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
     return {
-        html: obj.tpenProject?`<div class="is-full-width"> <h3> ... loading preview ... </h3> </div>`:``,
-        then: (elem)=>{
-            fetch("http://t-pen.org/TPEN/manifest/"+obj.tpenProject.value)
-            .then(response => response.json())
-            .then(ms => elem.innerHTML = `
-                ${ms.sequences[0].canvases.slice(0,10).reduce((a,b)=>a+=`
+        html: obj.tpenProject ? `<div class="is-full-width"> <h3> ... loading preview ... </h3> </div>` : ``,
+        then: (elem) => {
+            fetch("http://t-pen.org/TPEN/manifest/" + obj.tpenProject.value)
+                .then(response => response.json())
+                .then(ms => elem.innerHTML = `
+                ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `
                 <div class="page">
-                    <h3>${b.label}</h3>
+                    <h3>${b.label}</h3> <a href="./layout.html#${ms['@id']}">(edit layout)</a>
                     <div class="pull-right col-6">
                         <img src="${b.images[0].resource['@id']}">
                     </div>
-                        ${b.otherContent[0].resources.reduce((aa,bb)=>aa+=`
-                        <span class="line">${bb.resource["cnt:chars"].length?bb.resource["cnt:chars"]:"[ empty line ]"}</span>
-                        `,``)}
+                        ${b.otherContent[0].resources.reduce((aa, bb) => aa += `
+                        <span class="line" title="${bb["@id"]}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}</span>
+                        `, ``)}
                 </div>
-                `,``)}
-        `)} 
+                `, ``)}
+        `)
+        }
+    }
+}
+
+DEER.TEMPLATES.osd = function(obj, options ={}) {
+    const imgURL = obj.sequences[0].canvases[options.index || 0].images[0].resource['@id']
+    return {
+        html: ``,
+        then: elem => {
+                OpenSeadragon({
+                    id:elem.id,
+                    tileSources: {
+                        type: 'image',
+                        url:  imgURL,
+                        crossOriginPolicy: 'Anonymous',
+                        ajaxWithCredentials: false
+                    }
+                })
+        }
+    }
+}
+
+DEER.TEMPLATES.lines = function (obj, options = {}) {
+    let c = obj.sequences[0].canvases[options.index || 0]
+    return {
+        html: `
+        <div class="page">
+            <h3>${c.label}</h3>
+            <div class="row">
+            <a class="col tag gloss-location ulm" data-change="upper left margin">🡤 margin</a>
+                <a class="col tag gloss-location um" data-change="upper margin">🡡 margin</a>
+                <a class="col tag gloss-location urm" data-change="upper right margin">🡥 margin</a>
+            </div>
+            <div class="row">
+                <a class="col tag gloss-location llm" data-change="lower left margin">🡧 margin</a>
+                <a class="col tag gloss-location lm" data-change="lower margin">🡣 margin</a>
+                <a class="col tag gloss-location lrm" data-change="lower right margin">🡦 margin</a>
+            </div>
+            <div class="row">
+                <a class="col tag gloss-location ti" data-change="top intralinear">⇞ intralinear</a>
+                <a class="col tag gloss-location li" data-change="lower intralinear">⇟ intralinear</a>
+            </div>
+<!--            <div class="pull-right col-6">
+                <form deer-type="List">
+                    <input type="hidden" deer-key="forCanvas" value="${c["@id"]}">
+                    <input type="hidden" id="linesList" deer-input-type="List" deer-array-delimeter=" ">
+                    <select deer-type="glossLocation">
+                        <option value="upper margin">upper margin</option>
+                        <option value="lower margin">lower margin</option>
+                        <option value="upper left margin">upper left margin</option>
+                        <option value="lower left margin">lower left margin</option>
+                        <option value="upper right margin">upper right margin</option>
+                        <option value="lower right margin">lower right margin</option>
+                        <option value="top intralinear">top intralinear</option>
+                        <option value="lower intralinear">lower intralinear</option>
+                    </select>
+                    <input type="submit">
+                </form>
+            </div> -->
+            <div class="col">
+                <script>
+                    function batchLine(change) {
+                        [...document.getElementsByTagName("line")].forEach(l=>{l.classList[change]("selected");l.classList.remove("just")})
+                    }
+                </script>
+                <a class="tag is-small" data-change="add">Select All</a>
+                <a class="tag is-small" data-change="remove">Deselect All</a>
+                <a class="tag is-small" data-change="toggle">Invert All</a>
+            </div>
+                ${c.otherContent[0].resources.reduce((aa, bb, i) => aa += `
+                <line title="${bb['@id']}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}</line>
+                `, ``)}
+        </div>
+        `,
+        then: elem => {
+            const allLines = elem.getElementsByTagName("line")
+            for (const l of allLines) { l.addEventListener("click", selectLine) }
+            function selectLine(event) {
+                const lastClick = document.querySelector("line.just")
+                const line = event.target.closest("line")
+                const SHIFT = event.shiftKey
+                if (lastClick && SHIFT) {
+                    // band-select
+                    const change = lastClick.classList.contains("selected") // change is constant
+                        ? "add"
+                        : "remove"
+                    const lookNext = parseInt(lastClick.getAttribute("index")) < parseInt(line.getAttribute("index"))
+                        ? "nextElementSibling"
+                        : "previousElementSibling"
+                    let changeLine = lastClick
+                    do {
+                        changeLine = changeLine[lookNext]
+                        if(!changeLine.classList.contains("located")){
+                            changeLine.classList[change]("selected")
+                        }
+                    } while (changeLine !== line)
+                } else {
+                    if(!line.classList.contains("located")){
+                        line.classList.toggle("selected")
+                    }
+                }
+                if (lastClick) { lastClick.classList.remove("just") }
+                if(!line.classList.contains("located")){
+                    line.classList.add("just")
+                }
+            }
+            const controls = elem.getElementsByTagName("a.tag")
+            for (const b of controls) {
+                b.addEventListener("click",e=>{
+                    const change = e.target.getAttribute("data-change")
+                    Array.from(allLines).filter(el=>!el.classList.contains("located")).forEach(l=>{l.classList[change]("selected");l.classList.remove("just")})
+                })
+            }
+            const locations = elem.querySelectorAll("a.gloss-location")
+            for (const l of locations) {
+                l.addEventListener("click",e=>{
+                    const assignment= e.target.getAttribute("data-change")
+                    const selected = elem.querySelectorAll(".selected")
+                    for (const s of selected) {
+                        s.classList.add("located", assignment.split(/\s/).reduce((response,word)=> response+=word.slice(0,1),''))
+                        s.classList.remove("just", "selected")
+                    }
+                })
+            }
+        }
     }
 }
 
@@ -257,7 +389,6 @@ DEER.TEMPLATES.list = function (obj, options = {}) {
         })
         tmpl += `</ul>`
     }
-
     return tmpl
 }
 
@@ -290,22 +421,22 @@ DEER.TEMPLATES.person = function (obj, options = {}) {
  */
 DEER.TEMPLATES.pageRanges = function (obj, options = {}) {
     return {
-        then: (elem)=>{
-            let queryObj = { "body.isPartOf.value" : obj['@id'] }
+        then: (elem) => {
+            let queryObj = { "body.isPartOf.value": obj['@id'] }
             fetch(DEER.URLS.QUERY, {
                 method: "POST",
                 mode: "cors",
                 body: JSON.stringify(queryObj)
             })
-            .then(response => response.json())
-            .then(pointers => {
-                let list = []
-                pointers.map(tc => list.push(fetch(tc.target || tc["@id"] || tc.id).then(response => response.json().catch(err => { __deleted: console.log(err) }))))
-                return Promise.all(list).then(l => l.filter(i => !i.hasOwnProperty("__deleted")))
-            })
-            .then(pages => pages.reduce((a,b)=> b+=`<deer-view deer-id="${a['@id']||a.id}" deer-template="gloss">range</deer-view>`,``))
-            .then(html=> elem.innerHTML = html)
-            .then(() => setTimeout(UTILS.broadcast(undefined, DEER.EVENTS.NEW_VIEW, elem, {set: elem.querySelectorAll("[deer-template]")}), 0))
+                .then(response => response.json())
+                .then(pointers => {
+                    let list = []
+                    pointers.map(tc => list.push(fetch(tc.target || tc["@id"] || tc.id).then(response => response.json().catch(err => { __deleted: console.log(err) }))))
+                    return Promise.all(list).then(l => l.filter(i => !i.hasOwnProperty("__deleted")))
+                })
+                .then(pages => pages.reduce((a, b) => b += `<deer-view deer-id="${a['@id'] || a.id}" deer-template="gloss">range</deer-view>`, ``))
+                .then(html => elem.innerHTML = html)
+                .then(() => setTimeout(UTILS.broadcast(undefined, DEER.EVENTS.NEW_VIEW, elem, { set: elem.querySelectorAll("[deer-template]") }), 0))
         },
         html: `ranges incoming`
     }
