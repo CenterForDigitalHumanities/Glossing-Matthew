@@ -21,10 +21,10 @@ DEER.TEMPLATES.cat = (obj) => `<h5>${obj.name}</h5><img src="http://placekitten.
 // sandbox repository URLS
 DEER.URLS = {
     BASE_ID: "http://devstore.rerum.io/v1",
-    CREATE: "http://tinydev.rerum.io/app/create",
-    UPDATE: "http://tinydev.rerum.io/app/update",
-    QUERY: "http://tinydev.rerum.io/app/query",
-    OVERWRITE: "http://tinydev.rerum.io/app/overwrite",
+    CREATE: "http://tinymattdev.rerum.io/tiny-matt/create",
+    UPDATE: "http://tinymattdev.rerum.io/tiny-matt/update",
+    QUERY: "http://tinymattdev.rerum.io/tiny-matt/query",
+    OVERWRITE: "http://tinymattdev.rerum.io/tiny-matt/overwrite",
     SINCE: "http://devstore.rerum.io/v1/since"
 }
 // Render is probably needed by all items, but can be removed.
