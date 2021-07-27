@@ -244,23 +244,6 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 <a class="col tag gloss-location ti" data-change="top intralinear">⇞ intralinear</a>
                 <a class="col tag gloss-location li" data-change="lower intralinear">⇟ intralinear</a>
             </div>
-<!--            <div class="pull-right col-6">
-                <form deer-type="List">
-                    <input type="hidden" deer-key="forCanvas" value="${c["@id"]}">
-                    <input type="hidden" id="linesList" deer-input-type="List" deer-array-delimeter=" ">
-                    <select deer-type="glossLocation">
-                        <option value="upper margin">upper margin</option>
-                        <option value="lower margin">lower margin</option>
-                        <option value="upper left margin">upper left margin</option>
-                        <option value="lower left margin">lower left margin</option>
-                        <option value="upper right margin">upper right margin</option>
-                        <option value="lower right margin">lower right margin</option>
-                        <option value="top intralinear">top intralinear</option>
-                        <option value="lower intralinear">lower intralinear</option>
-                    </select>
-                    <input type="submit">
-                </form>
-            </div> -->
             <div class="col">
                 <script>
                     function batchLine(change) {
@@ -272,7 +255,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 <a class="tag is-small" data-change="toggle">Invert All</a>
             </div>
                 ${c.otherContent[0].resources.reduce((aa, bb, i) => aa += `
-                <line title="${bb['@id']}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}</line>
+                <line title="${bb['@id']}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="unassign tag is-small bg-light text-dark">⭯</i></line>
                 `, ``)}
         </div>
         `,
@@ -326,6 +309,30 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                     }
                 })
             }
+            const unassignmentButtons = elem.querySelectorAll("i.unassign")
+            for (const r of unassignmentButtons) {
+                r.addEventListener("click",e=>{
+                    e.preventDefault()
+                    const forLine = e.target.closest("line")
+                    if(forLine === null) { return false }
+                    const classes = ['um', 'lm', 'ulm', 'llm', 'urm', 'lrm', 'ti', 'li'] 
+                    const location = Array.from(forLine.classList).filter(val=>classes.includes(val))
+                    let thisLine = forLine
+                    while (thisLine) {
+                        if(!thisLine.classList.contains(location)) { break }
+
+                        thisLine.classList.remove(location)
+                        thisLine.classList.remove("located")
+
+                        thisLine = thisLine.nextElementSibling
+                    }
+                    const selected = elem.querySelectorAll(".selected")
+                    for (const s of selected) {
+                        s.classList.add("located", assignment.split(/\s/).reduce((response,word)=> response+=word.slice(0,1),''))
+                        s.classList.remove("just", "selected")
+                    }
+                })
+            }        
         }
     }
 }

@@ -98,11 +98,30 @@ line.urm,
 line.lrm,
 line.ti,
 line.li {
-text-overflow: ellipsis;
-white-space: nowrap;
-width: 100%;
-overflow: hidden;
+  text-overflow: ellipsis;
+  white-space  : nowrap;
+  width        : 100%;
+  overflow     : hidden;
 }
+
+i.unassign {
+  display : none;
+  position: absolute;
+  right   : 1px;
+  top     : 1px;
+}
+
+line.um i.unassign,
+line.lm i.unassign,
+line.ulm i.unassign,
+line.llm i.unassign,
+line.urm i.unassign,
+line.lrm i.unassign,
+line.ti i.unassign,
+line.li i.unassign {
+  display: inline-block;
+}
+
 line.um+line.um,
 line.lm+line.lm,
 line.ulm+line.ulm,
@@ -111,11 +130,23 @@ line.urm+line.urm,
 line.lrm+line.lrm,
 line.ti+line.ti,
 line.li+line.li {
+  transform: scale(0.68);
+}
+
+line.um+line.um i.unassign,
+line.lm+line.lm i.unassign,
+line.ulm+line.ulm i.unassign,
+line.llm+line.llm i.unassign,
+line.urm+line.urm i.unassign,
+line.lrm+line.lrm i.unassign,
+line.ti+line.ti i.unassign,
+line.li+line.li i.unassign {
   display: none;
 }
 
 line {
   display    : block;
+  position   : relative;
   user-select: none;
   transition : background-color .2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
