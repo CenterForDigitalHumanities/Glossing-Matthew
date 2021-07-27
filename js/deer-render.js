@@ -308,7 +308,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                     line.classList.add("just")
                 }
             }
-            const controls = elem.querySelectorAll("a.tag")
+            const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
             for (const b of controls) {
                 b.addEventListener("click",e=>{
                     const change = e.target.getAttribute("data-change")
