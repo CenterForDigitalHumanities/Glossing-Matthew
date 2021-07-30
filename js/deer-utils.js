@@ -21,6 +21,7 @@ export default {
         }
         return fetch(DEER.URLS.QUERY, {
             method: "POST",
+            mode: 'cors',
             body: JSON.stringify(queryObj)
         }).then(response => response.json())
             .then(function (pointers) {
@@ -221,6 +222,7 @@ export default {
          * @returns Boolean if annotation should be considered a replacement for the current value.
          **/
         function checkMatch(expanding, asserting, matchOn) {
+            return true
             let match = false
             CheckMatch: for (const m of matchOn) {
                 let obj_match = m.split('.').reduce((o, i) => o[i], expanding)
@@ -295,6 +297,7 @@ export default {
         let matches = await fetch(DEER.URLS.QUERY, {
             method: "POST",
             body: JSON.stringify(obj),
+            mode: 'cors',
             headers: {
                 "Content-Type": "application/json"
             }
