@@ -88,7 +88,7 @@
             manuscript.setAttribute("deer-id", msid)
             thumbroll.setAttribute("deer-id", msid)
             newGloss.setAttribute("href", "gloss.html?partOf=" + msid + "#")
-            fetch("http://tinymattdev.rerum.io/tiny-matt/query", {
+            fetch("http://tinydev.rerum.io/app/query", {
                 method: "POST",
                 body: JSON.stringify({
                     "body.partOf.value": msid

@@ -28,7 +28,7 @@ export default {
         CREATE: "http://tinymattdev.rerum.io/tiny-matt/create",
         UPDATE: "http://tinymattdev.rerum.io/tiny-matt/update",
         OVERWRITE: "http://tinymattdev.rerum.io/tiny-matt/overwrite",
-        QUERY: "http://tinymattdev.rerum.io/tiny-matt/query",
+        QUERY: "http://tinydev.rerum.io/app/query",
         SINCE: "http://devstore.rerum.io/v1/since"
     },
 
