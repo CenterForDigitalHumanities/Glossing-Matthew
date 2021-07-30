@@ -21,6 +21,7 @@ export default {
         }
         return fetch(DEER.URLS.QUERY, {
             method: "POST",
+            mode: 'cors',
             body: JSON.stringify(queryObj)
         }).then(response => response.json())
             .then(function (pointers) {
@@ -295,6 +296,7 @@ export default {
         let matches = await fetch(DEER.URLS.QUERY, {
             method: "POST",
             body: JSON.stringify(obj),
+            mode: 'cors',
             headers: {
                 "Content-Type": "application/json"
             }
