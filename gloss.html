@@ -119,7 +119,7 @@
             thisMS.setAttribute("href", "./ms.html#" + msid)
             folioRange.setAttribute("deer-id", glossid)
             frPreview.setAttribute("deer-id", glossid)
-            fetch("http://tinydev.rerum.io/app/query", {
+            fetch("http://tinymatt.rerum.io/gloss/query", {
                 method: "POST",
                 body: JSON.stringify({
                     "body.partOf.value": msid
