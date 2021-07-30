@@ -265,8 +265,8 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
             function selectLine(event) {
                 const lastClick = document.querySelector("line.just")
                 const line = event.target.closest("line")
-                const SHIFT = event.shiftKey
-                if (lastClick && SHIFT) {
+
+                if (lastClick && event.shiftKey) {
                     // band-select
                     const change = lastClick.classList.contains("selected") // change is constant
                         ? "add"
@@ -286,11 +286,14 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                         line.classList.toggle("selected")
                     }
                 }
+
                 if (lastClick) { lastClick.classList.remove("just") }
+
                 if(!line.classList.contains("located")){
                     line.classList.add("just")
                 }
             }
+
             const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
             for (const b of controls) {
                 b.addEventListener("click",e=>{
