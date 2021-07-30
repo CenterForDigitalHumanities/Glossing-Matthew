@@ -116,7 +116,7 @@
             event.preventDefault()
             if (confirm("Really remove this manuscript?\n(Cannot be undone)")) {
                 let collectorId = document.querySelector('[deer-key="targetCollection"]').getAttribute("deer-source")
-                fetch("http://tinymattdev.rerum.io/tiny-matt/delete", {
+                fetch("http://tinymatt.rerum.io/gloss/delete", {
                     method: "DELETE",
                     body: collectorId
                 }).then(obj => {

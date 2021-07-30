@@ -192,7 +192,7 @@
                 gloss.reset()
                 let id = gloss.getAttribute("deer-id")
                 if (id.length === 0) throw "new form"
-                fetch("http://tinymattdev.rerum.io/tiny-matt/delete", {
+                fetch("http://tinymatt.rerum.io/gloss/delete", {
                     method: "DELETE",
                     body: id
                 }).then(obj => {
