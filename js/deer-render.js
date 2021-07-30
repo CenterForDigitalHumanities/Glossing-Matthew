@@ -260,6 +260,16 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
         </div>
         `,
         then: elem => {
+            const POSITIONS = {
+                ulm: "upper left margin",
+                um: "upper margin",
+                urm: "upper right margin",
+                llm: "lower left margin",
+                lm: "lower margin",
+                lrm: "lower right margin",
+                ti: "top intralinear",
+                li: "lower intralinear"
+            }
             const allLines = elem.getElementsByTagName("line")
             for (const l of allLines) { l.addEventListener("click", selectLine) }
             function selectLine(event) {
@@ -281,10 +291,8 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                             changeLine.classList[change]("selected")
                         }
                     } while (changeLine !== line)
-                } else {
-                    if(!line.classList.contains("located")){
-                        line.classList.toggle("selected")
-                    }
+                } else if(!line.classList.contains("located")){
+                    line.classList.toggle("selected")
                 }
                 if (lastClick) { lastClick.classList.remove("just") }
                 if(!line.classList.contains("located")){
@@ -315,7 +323,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                     e.preventDefault()
                     const forLine = e.target.closest("line")
                     if(forLine === null) { return false }
-                    const classes = ['um', 'lm', 'ulm', 'llm', 'urm', 'lrm', 'ti', 'li'] 
+                    const classes = Object.keys(POSITIONS) 
                     const location = Array.from(forLine.classList).filter(val=>classes.includes(val))
                     let thisLine = forLine
                     while (thisLine) {
@@ -323,16 +331,18 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
 
                         thisLine.classList.remove(location)
                         thisLine.classList.remove("located")
+                        thisLine.classList.remove("selected")
+                        thisLine.classList.remove("just")
 
                         thisLine = thisLine.nextElementSibling
                     }
-                    const selected = elem.querySelectorAll(".selected")
-                    for (const s of selected) {
-                        s.classList.add("located", assignment.split(/\s/).reduce((response,word)=> response+=word.slice(0,1),''))
-                        s.classList.remove("just", "selected")
-                    }
                 })
-            }        
+            }
+            const selected = elem.querySelectorAll(".selected")
+            for (const s of selected) {
+                s.classList.add("located", assignment.split(/\s/).reduce((response,word)=> response+=word.slice(0,1),''))
+                s.classList.remove("just", "selected")
+            }
         }
     }
 }
