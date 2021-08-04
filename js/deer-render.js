@@ -253,7 +253,9 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 <a class="tag is-small" data-change="add">Select All</a>
                 <a class="tag is-small" data-change="remove">Deselect All</a>
                 <a class="tag is-small" data-change="toggle">Invert All</a>
-                <button id="saveBtn" role="button">broop</button>
+            </div>
+            <div class="col">
+                <button id="saveBtn" role="button" style="visibility:hidden;">Save Changes</button>
             </div>
                 ${c.otherContent[0].resources.reduce((aa, bb, i) => aa += `
                 <line title="${bb['@id'].split('/').pop()}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="unassign tag is-small bg-light text-dark">⭯</i></line>
@@ -301,6 +303,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 if (!line.classList.contains("located")) {
                     line.classList.add("just")
                 }
+                saveBtn.style.visibility="visible"
             }
 
             const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
@@ -335,6 +338,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                         thisLine.classList.remove(location, "located", "selected", "just")
                         thisLine = thisLine.nextElementSibling
                     }
+                    saveBtn.style.visibility="visible"
                 })
             }
             const selected = elem.querySelectorAll(".selected")
@@ -377,6 +381,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                     }
                     const ev = new CustomEvent("Locations Update")
                     globalFeedbackBlip(ev, `Locations updated successfully.`, true)
+                    saveBtn.style.visibility="hidden"
                     return res.json()
                 }).catch(err => {
                     const ev = new CustomEvent("Locations Update")
