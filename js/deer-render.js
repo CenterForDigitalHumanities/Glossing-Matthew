@@ -256,7 +256,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 <button id="saveBtn" role="button">broop</button>
             </div>
                 ${c.otherContent[0].resources.reduce((aa, bb, i) => aa += `
-                <line title="${bb['@id']}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="unassign tag is-small bg-light text-dark">⭯</i></line>
+                <line title="${bb['@id'].split('/').pop()}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="unassign tag is-small bg-light text-dark">⭯</i></line>
                 `, ``)}
         </div>
         `,
@@ -368,7 +368,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                     motivation: "classifying"
                 }
                 fetch(DEER.URLS.OVERWRITE, {
-                    method: 'POST',
+                    method: 'PUT',
                     mode: 'cors',
                     body: JSON.stringify(locationAnnotation)
                 }).then(res => {
@@ -462,7 +462,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                     for (const line in glossLines) {
                         const el = document.querySelector(`line[title="${line}"]`)
                         if (!el) { continue }
-                        const locatedClass = glossLines[line] ? "" : `located ${glossLines[line]}`
+                        const locatedClass = glossLines[line] ? `located ${glossLines[line]}` : ""
                         el.className = locatedClass
                     }
                 }
