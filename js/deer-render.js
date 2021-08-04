@@ -397,22 +397,18 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 }, 3000)
             }
             function highlightLocations() {
-                const historyWildcard = { "$exists": true, "$size": 0 }
+                const historyWildcard = { $exists: true, $type: 'array', $eq: [] }
 
                 const query = {
                     target: c['@id'],
                     motivation: "classifying",
                     'body.locations': { $exists: true },
-                    '__rerum.history': historyWildcard
+                    '__rerum.history.next': historyWildcard
                 }
 
                 fetch(DEER.URLS.QUERY, {
                     method: 'POST',
                     mode: 'cors',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json+ld'
-                    },
                     body: JSON.stringify(query)
                 }).then(res => {
                     if (!res.ok) {
@@ -433,9 +429,8 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                         fetch(DEER.URLS.CREATE, {
                             method: 'POST',
                             mode: 'cors',
-                            credentials: 'include',
                             headers: {
-                                'Content-Type': 'application/json+ld'
+                                'Content-Type': 'application/ld+json'
                             },
                             body: JSON.stringify(locationAnnotation)
                         }).then(res => {
