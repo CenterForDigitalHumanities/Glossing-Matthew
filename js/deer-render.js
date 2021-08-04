@@ -349,12 +349,18 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                     const location = Array.from(line.classList).filter(val => classes.includes(val))?.[0]
                     locationMap.set(line.getAttribute("title"), location ?? false)
                 })
+
+                const locationAnnotationId = document.querySelector("div.page").getAttribute("data-marginalia")
+                if(!locationAnnotationId) {
+                    throw new Error("URI for Annotation Location could not be found.")
+                }
+
                 /**
                  * TODO: This is a dirty trick to make this save reliably. The annotation should be targeted to 
                  * just the lines within the Canvas and this map should be iterated through instead.
                  */
                 const locationAnnotation = {
-                    "@id": "",
+                    "@id": locationAnnotationId,
                     "@type": "Annotation",
                     "@context": "http://www.w3.org/ns/anno.jsonld",
                     target: c['@id'],
@@ -364,10 +370,6 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 fetch(DEER.URLS.OVERWRITE, {
                     method: 'POST',
                     mode: 'cors',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json+ld'
-                    },
                     body: JSON.stringify(locationAnnotation)
                 }).then(res => {
                     if (!res.ok) {
@@ -397,6 +399,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 }, 3000)
             }
             function highlightLocations() {
+                const pageElement = document.querySelector("div.page")
                 const historyWildcard = { $exists: true, $type: 'array', $eq: [] }
 
                 const query = {
@@ -441,12 +444,14 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                         }).then(loc => {
                             const ev = new CustomEvent("Marginalia locations loaded")
                             globalFeedbackBlip(ev, `Marginalia locations loaded`, true)
-                            const pageElement = document.querySelector("div.page")
                             pageElement.setAttribute("data-marginalia", loc.new_obj_state['@id'])
                         })
                             .catch(err => console.error(err))
 
-                    } else { drawAssignment(annotations[0].body.locations) }
+                    } else {
+                        drawAssignment(annotations[0].body.locations)
+                        pageElement.setAttribute("data-marginalia", annotations[0]['@id'])
+                    }
                 })
                     .catch(err => {
                         const ev = new CustomEvent("Location annotation query")
@@ -454,7 +459,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                     })
 
                 function drawAssignment(glossLines) {
-                    for (const line of glossLines) {
+                    for (const line in glossLines) {
                         const el = document.querySelector(`line[title="${line}"]`)
                         if (!el) { continue }
                         const locatedClass = glossLines[line] ? "" : `located ${glossLines[line]}`
