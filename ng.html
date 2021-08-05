@@ -11,10 +11,10 @@
         }
 
         .removeTag:after {
-          content: 'x';
-          color: red;
-          border: 1px solid black;
-          padding: 2px;
+            content: 'x';
+            color: red;
+            border: 1px solid black;
+            padding: 2px;
         }
     </style>
 </head>
@@ -45,20 +45,18 @@
             <input type="text" deer-key="targetVerse" placeholder="0-1" class="col-9 col-4-md">
             <label class="col-3 col-2-md text-right">Notes</label>
             <input type="text" deer-key="notes" placeholder="notes" class="col-9 col-4-md"> 
-
-            <div class="tagWidget">
-                <!-- Could maybe be a template so we can deer-view it, nice to have for DEER event broadcases. -->
-                <p class="col-12 col-12-md">Tags. Add one at a time. Connected tags are displayed below the input. Click the red 'x' to remove the tag.</p>
-                <input type="hidden" deer-key="tags" deer-input-type="Set">
-                <label class="col-3 col-2-md text-right">Tag Name</label>
-                <input id="tagInput" type="text" class="col-9 col-4-md">
-                <button id="addTagBtn" onclick="addTag(event)"> Add Tag </button>
-                <div class="selectedEntities col-12 col-12-md"></div>
-            </div>
-
+        </div>
+        <div class="tagWidget row">
+            <!-- Could maybe be a template so we can deer-view it, nice to have for DEER event broadcases. -->
+            <p class="col-12 col-12-md">Tags. Add one at a time. Connected tags are displayed below the input. Click the red 'x' to remove the tag.</p>
+            <input type="hidden" deer-key="tags" deer-input-type="Set">
+            <label class="col-3 col-2-md text-right">Tag Name</label>
+            <input id="tagInput" type="text" class="col-9 col-4-md">
+            <button id="addTagBtn" onclick="addTag(event)"> Add Tag </button>
+            <div class="selectedEntities col-12 col-12-md"></div>
         </div>
         
-        <input type="submit" value="create" class="col">
+        <input type="submit" value="Create" class="col">
         <a href="./named-glosses.html" onclick="deleteThis(event)" class="text-error">Drop from collection</a>
     </form>
 <!-- 
@@ -116,11 +114,14 @@
         window.onhashchange = onload = () => {
             let ngID = window.location.hash.substr(1)
             document.getElementById("named-gloss").setAttribute("deer-id", ngID)
+            if(ngID){
+                document.querySelector("input[type='submit']").value="Update"
+            }
             const broadcast = function (event = {}, type, element, obj = {}) {
                 let e = new CustomEvent(type, { detail: Object.assign(obj, { target: event.target }), bubbles: true })
                 element.dispatchEvent(e)
             }
-            //broadcast(undefined, "deer-view", document, { set: [pageRanges] })
+            //broadcast(undefined, "deer-view", document, {})
         }
 
         function deleteThis(event) {
@@ -194,7 +195,7 @@
               arr_tag_names.splice(index, 1);
             }
             arr_tag_names.forEach(name => {
-               let tag = `<span class="tag is-small">${name}<button class="removeTag" onclick="removeTag(event, '${name}')" value="x"></button></span>` 
+               let tag = `<span class="tag is-small">${name}<span class="removeTag" onclick="removeTag(event, '${name}')"></span></span>` 
                selectedTagsArea.innerHTML += tag
             })
             let str_arr = arr_tag_names.join(delim)
