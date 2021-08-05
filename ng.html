@@ -100,22 +100,58 @@
             }
         }
 
-    function handleMultiSelect(event, fromTemplate){
-        let sel = event.target
-        let selectedTagsArea = sel.nextElementSibling
-        selectedTagsArea.innerHTML = ""
-        let arr_id = Array.from(sel.selectedOptions).map(option=>option.value)
-        let arr_names = Array.from(sel.selectedOptions).map(option=>option.text)
-        let input = (fromTemplate) ? sel.parentElement.previousElementSibling : sel.previousElementSibling
-        let delim = (input.hasAttribute("deer-array-delimeter")) ? input.getAttribute("deer-array-delimeter") : ","
-        let str_arr = arr_id.join(delim)
-        arr_names.forEach(selection => {
-           let tag = `<span class="tag is-small">${selection}</span>` 
-           selectedTagsArea.innerHTML += tag
+        /**
+         * A hidden input is tracking a select or multi select. It is hidden and it is not a primitive, so DEER does not handle the value.
+         * Make sure to set the value of this hidden input.  The value is a string, that string contains a delimiter to join on for cases of multiple values.
+         * 
+         * @param {Object} annotationData Expanded data that is all annotation data for a form.
+         * @param {Array(String)} keys The specific annotations we are looking for in annotationData. 
+         * @param {HTMLElement} form The completely loaded HTML <form> containing the <selects>s
+         * @return None
+         */
+        function setTrackedHiddenValues(annotationData, keys=["tag"], form=document.getElementById("named-gloss")){
+            keys.forEach(key =>{
+                let data_arr = 
+                (annotationData[key].hasOwnProperty("value") && annotationData[key].value.hasOwnProperty("items")) ? annotationData[key].value.items : annotationData[key].hasOwnProperty("items") ? annotationData[key].items : [ LR.utils.getAnnoValue(annotationData[key]) ]
+                let input = form.querySelector("input[deer-key='"+key+"']")
+                //Set the value of the hidden input that tracks this for DEER
+                //Check if we need a different delimeter.  The input will tell us.
+                let delim = (input.hasAttribute("deer-array-delimeter")) ? input.getAttribute("deer-array-delimeter") : ","
+                //Generate the value for the input that DEER supports - "uri,uri..."
+                let str_arr = (data_arr.length > 1) ? data_arr.join(delim) : (data_arr.length === 1 ) ? data_arr[0] : ""
+                input.value = str_arr
+            })
+        }
+
+         /**
+         * Detects that HTML has finished drawing in the DOM and can be interacted with.
+         * This most often occures when drawing a deer-view on page load or from redraws.
+         * @see deer-render.js RENDER.element
+         */
+        addEventListener('deer-view-rendered', event => {
+            let whatElem = event.target
+            let whatData = event.detail
         })
-        input.value=str_arr
-        input.setAttribute("value", str_arr)
-    }
+
+        /**
+         * Detects that all annotation data is gathered and all HTML of the form is in the DOM and can be interacted with.
+         * This is important for pre-filling or pre-selecting values of multi select areas, dropdown, checkboxes, etc. 
+         * This event will come after all deer-view-rendered events have finished.
+         * @see deer-record.js DeerReport.constructor()  
+         */
+        addEventListener('deer-form-rendered', event => {
+            let whatRecordForm = event.target.id
+            let annotationData = event.detail
+            switch (whatRecordForm) {
+                case "named-gloss":
+                    LR.utils.setTrackedHiddenValues(annotationData, ["formerUses", "formerLocations"], event.target)
+                    break
+                default:
+
+            }
+
+        })
+
     </script>
 </body>
 
