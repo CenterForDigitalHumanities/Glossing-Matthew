@@ -23,16 +23,16 @@
             <input type="text" deer-key="title" placeholder="Label" class="col-9 col-10-md">
             <label class="col-3 col-2-md text-right">Description:</label>
             <input type="text" deer-key="description" placeholder="notes" class="col-9 col-4-md">
+            <label class="col-3 col-2-md text-right">Tags. Add one at a time. Connected tags are displayed below the input. Click the red 'x' to remove the tag.</label>
 
-            <!-- Could maybe be a template -->
-            <input type="hidden" deer-key-todo="tags" deer-input-type="Set">
-            <select multiple oninput="handleMultiSelect(event, false)">
-                <option value="Tag1">Tag1</option>
-                <option value="Tag2">Tag2</option>
-                <option value="Tag3">Tag3</option>
-                <option value="Tag4">Tag4</option>
-            </select>
-            <div class="selectedEntities"></div>
+            <div>
+                <!-- Could maybe be a template -->
+                <input type="hidden" deer-key-todo="tags" deer-input-type="Set">
+                <label class="col-3 col-2-md text-right">Tag Name</label>
+                <input id="tagInput" type="text">
+                <button id="addTagBtn"> Add Tag </button>
+                <div class="selectedEntities"></div>
+            </div>
 
             <label class="col-3 col-2-md text-right">Chapter</label>
             <input type="number" deer-key="targetChapter" placeholder="0" class="col-9 col-4-md">
