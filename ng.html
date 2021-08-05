@@ -45,16 +45,19 @@
             <input type="text" deer-key="targetVerse" placeholder="0-1" class="col-9 col-4-md">
             <label class="col-3 col-2-md text-right">Notes</label>
             <input type="text" deer-key="notes" placeholder="notes" class="col-9 col-4-md"> 
+
+            <div class="tagWidget">
+                <!-- Could maybe be a template so we can deer-view it, nice to have for DEER event broadcases. -->
+                <p class="col-12 col-12-md">Tags. Add one at a time. Connected tags are displayed below the input. Click the red 'x' to remove the tag.</p>
+                <input type="hidden" deer-key="tags" deer-input-type="Set">
+                <label class="col-3 col-2-md text-right">Tag Name</label>
+                <input id="tagInput" type="text" class="col-9 col-4-md">
+                <button id="addTagBtn" onclick="addTag(event)"> Add Tag </button>
+                <div class="selectedEntities col-12 col-12-md"></div>
+            </div>
+
         </div>
-        <div class="tagWidget">
-            <!-- Could maybe be a template so we can deer-view it, nice to have for DEER event broadcases. -->
-            <p>Tags. Add one at a time. Connected tags are displayed below the input. Click the red 'x' to remove the tag.</p>
-            <input type="hidden" deer-key="tags" deer-input-type="Set">
-            <label class="col-3 col-2-md text-right">Tag Name</label>
-            <input id="tagInput" type="text" class="col-9 col-4-md">
-            <button id="addTagBtn" onclick="addTag(event)"> Add Tag </button>
-            <div class="selectedEntities"></div>
-        </div>
+        
         <input type="submit" value="create" class="col">
         <a href="./named-glosses.html" onclick="deleteThis(event)" class="text-error">Drop from collection</a>
     </form>
