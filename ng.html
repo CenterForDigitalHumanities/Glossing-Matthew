@@ -141,19 +141,22 @@
             event.preventDefault()
             event.stopPropagation()
             let selectedTagsArea = document.getElementById("knownTags")
-            let tagInput = event.target.previousElementSibling
+            const tagInput = event.target.previousElementSibling
             let tracked_tags = document.querySelector("input[deer-key='tags']")
-            let delim = (tracked_tags.hasAttribute("deer-array-delimeter")) ? tracked_tags.getAttribute("deer-array-delimeter") : ","
-            let newTagName = tagInput.value
+            const delim = (tracked_tags.hasAttribute("deer-array-delimeter")) ? tracked_tags.getAttribute("deer-array-delimeter") : ","
+            const newTagName = tagInput.value
             selectedTagsArea.innerHTML = ""
             let arr_tag_names = tracked_tags.value ? tracked_tags.value.split(delim) : []
-            arr_tag_names.push(newTagName)
+            const index = arr_tag_names.indexOf(tagName)
+            if (index === -1) {
+              arr_tag_names.push(newTagName)
+            }
             arr_tag_names.forEach(name => {
                let tag = `<span class="tag is-small">${name}<span class="removeTag" onclick="removeTag(event, '${name}')"></span></span>` 
                selectedTagsArea.innerHTML += tag
             })
             tagInput.value=""
-            let str_arr = arr_tag_names.join(delim)
+            const str_arr = arr_tag_names.join(delim)
             tracked_tags.value=str_arr
             tracked_tags.setAttribute("value", str_arr)
             tracked_tags.$isDirty = true
@@ -171,8 +174,8 @@
                 console.warn("There are no tags recorded for this named gloss")
                 return false
             }
-            let input = form.querySelector("input[deer-key='tags']")
-            let area = input.nextElementSibling //The view or select should always be just after the input tracking the values from it.
+            form.querySelector("input[deer-key='tags']").value = arr_names.join(",")
+            let area = form.querySelector("input[deer-key='tags']").nextElementSibling //The view or select should always be just after the input tracking the values from it.
             //Now build the little tags
             let selectedTagsArea = document.getElementById("knownTags")
             selectedTagsArea.innerHTML = ""
