@@ -13,7 +13,7 @@
 
 import { default as UTILS } from './deer-utils.js'
 import { default as config } from './deer-config.js'
-import { OpenSeadragon} from './openseadragon.js'
+import { OpenSeadragon } from './openseadragon.js'
 
 const changeLoader = new MutationObserver(renderChange)
 var DEER = config
@@ -206,20 +206,20 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
     }
 }
 
-DEER.TEMPLATES.osd = function(obj, options ={}) {
+DEER.TEMPLATES.osd = function (obj, options = {}) {
     const imgURL = obj.sequences[0].canvases[options.index || 0].images[0].resource['@id']
     return {
         html: ``,
         then: elem => {
-                OpenSeadragon({
-                    id:elem.id,
-                    tileSources: {
-                        type: 'image',
-                        url:  imgURL,
-                        crossOriginPolicy: 'Anonymous',
-                        ajaxWithCredentials: false
-                    }
-                })
+            OpenSeadragon({
+                id: elem.id,
+                tileSources: {
+                    type: 'image',
+                    url: imgURL,
+                    crossOriginPolicy: 'Anonymous',
+                    ajaxWithCredentials: false
+                }
+            })
         }
     }
 }
@@ -287,50 +287,50 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                     let changeLine = lastClick
                     do {
                         changeLine = changeLine[lookNext]
-                        if(!changeLine.classList.contains("located")){
+                        if (!changeLine.classList.contains("located")) {
                             changeLine.classList[change]("selected")
                         }
                     } while (changeLine !== line)
-                } else if(!line.classList.contains("located")){
+                } else if (!line.classList.contains("located")) {
                     line.classList.toggle("selected")
                 }
 
                 if (lastClick) { lastClick.classList.remove("just") }
 
-                if(!line.classList.contains("located")){
+                if (!line.classList.contains("located")) {
                     line.classList.add("just")
                 }
             }
 
             const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
             for (const b of controls) {
-                b.addEventListener("click",e=>{
+                b.addEventListener("click", e => {
                     const change = e.target.getAttribute("data-change")
-                    Array.from(allLines).filter(el=>!el.classList.contains("located")).forEach(l=>{l.classList[change]("selected");l.classList.remove("just")})
+                    Array.from(allLines).filter(el => !el.classList.contains("located")).forEach(l => { l.classList[change]("selected"); l.classList.remove("just") })
                 })
             }
             const locations = elem.querySelectorAll("a.gloss-location")
             for (const l of locations) {
-                l.addEventListener("click",e=>{
-                    const assignment= e.target.getAttribute("data-change")
+                l.addEventListener("click", e => {
+                    const assignment = e.target.getAttribute("data-change")
                     const selected = elem.querySelectorAll(".selected")
                     for (const s of selected) {
-                        s.classList.add("located", assignment.split(/\s/).reduce((response,word)=> response+=word.slice(0,1),''))
+                        s.classList.add("located", assignment.split(/\s/).reduce((response, word) => response += word.slice(0, 1), ''))
                         s.classList.remove("just", "selected")
                     }
                 })
             }
             const unassignmentButtons = elem.querySelectorAll("i.unassign")
             for (const r of unassignmentButtons) {
-                r.addEventListener("click",e=>{
+                r.addEventListener("click", e => {
                     e.preventDefault()
                     const forLine = e.target.closest("line")
-                    if(forLine === null) { return false }
-                    const classes = Object.keys(POSITIONS) 
-                    const location = Array.from(forLine.classList).filter(val=>classes.includes(val))
+                    if (forLine === null) { return false }
+                    const classes = Object.keys(POSITIONS)
+                    const location = Array.from(forLine.classList).filter(val => classes.includes(val))
                     let thisLine = forLine
                     while (thisLine) {
-                        if(!thisLine.classList.contains(location)) { break }
+                        if (!thisLine.classList.contains(location)) { break }
 
                         thisLine.classList.remove(location)
                         thisLine.classList.remove("located")
@@ -343,10 +343,41 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
             }
             const selected = elem.querySelectorAll(".selected")
             for (const s of selected) {
-                s.classList.add("located", assignment.split(/\s/).reduce((response,word)=> response+=word.slice(0,1),''))
+                s.classList.add("located", assignment.split(/\s/).reduce((response, word) => response += word.slice(0, 1), ''))
                 s.classList.remove("just", "selected")
             }
         }
+    }
+}
+
+DEER.TEMPLATES.managedlist = function (obj, options = {}) {
+    try {
+        let tmpl = ``
+        if (options.list) {
+            tmpl += `<ul>`
+            obj[options.list].forEach((val, index) => {
+                const removeBtn = `<a href="#" class="removeCollectionItem" title="Delete This Entry"
+                onclick="removeCollectionEntry(event, '${val["@id"]}', this.parentElement, '${UTILS.getLabel(obj)}')">&#x274C</a>`
+                const visibilityBtn = `<a onclick="togglePublic(event)" href="#" title="Toggle public visibility"> 👁 </a>`
+                tmpl += `<li>
+                ${visibilityBtn}
+                <a href="${options.link}${val['@id']}">
+                [ <deer-view deer-id="${val["@id"]}" deer-template="prop" deer-key="alternative"></deer-view> ] <deer-view deer-id="${val["@id"]}" deer-template="label">${index + 1}</deer-view>
+                </a>
+                ${removeBtn}
+                </li>`
+            })
+            tmpl += `</ul>`
+        }
+        else {
+            console.log("There are no items in this list to draw.")
+            console.log(obj)
+        }
+        return tmpl
+    } catch (err) {
+        console.log("Could not build list template.")
+        console.error(err)
+        return null
     }
 }
 
