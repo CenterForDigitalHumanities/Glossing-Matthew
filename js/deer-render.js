@@ -352,13 +352,12 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
 
 DEER.TEMPLATES.managedlist = function (obj, options = {}) {
     try {
-        let tmpl = ``
+        let tmpl = `<input type="hidden" deer-collection="${options.collection}">`
         if (options.list) {
             tmpl += `<ul>`
             obj[options.list].forEach((val, index) => {
-                const removeBtn = `<a href="#" class="removeCollectionItem" title="Delete This Entry"
-                onclick="removeCollectionEntry(event, '${val["@id"]}', this.parentElement, '${UTILS.getLabel(obj)}')">&#x274C</a>`
-                const visibilityBtn = `<a onclick="togglePublic(event)" href="#" title="Toggle public visibility"> 👁 </a>`
+                const removeBtn = `<a href="${val['@id']}" class="removeCollectionItem" title="Delete This Entry">&#x274C</a>`
+                const visibilityBtn = `<a onclick="togglePublic(event)" href="${val['@id']}" title="Toggle public visibility"> 👁 </a>`
                 tmpl += `<li>
                 ${visibilityBtn}
                 <a href="${options.link}${val['@id']}">
@@ -373,7 +372,53 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
             console.log("There are no items in this list to draw.")
             console.log(obj)
         }
-        return tmpl
+        return {
+            html: tmpl,
+            then: elem => {
+                document.querySelectorAll(".removeCollectionItem").forEach(el => el.addEventListener('click', (ev) => {
+                    ev.preventDefault()
+                    ev.stopPropagation()
+                    const itemID = el.getAttribute("href")
+                    const fromCollection = document.querySelector('input[deer-collection]').getAttribute("deer-collection")
+                    deleteThis(itemID, fromCollection)
+                }))
+
+                function deleteThis(id, collection) {
+                    if (confirm("Really remove this record?\n(Cannot be undone)")) {
+                        const historyWildcard = { "$exists": true, "$eq": [] }
+                        const queryObj = {
+                            $or: [{
+                                "targetCollection": collection
+                            }, {
+                                "body.targetCollection": collection
+                            }],
+                            target: id,
+                            "__rerum.history.next": historyWildcard
+                        }
+                        fetch("http://tinymatt.rerum.io/gloss/query", {
+                            method: "POST",
+                            body: JSON.stringify(queryObj)
+                        })
+                            .then(r => r.ok ? r.json() : Promise.reject(new Error(r?.text)))
+                            .then(annos => {
+                                let all = annos.map(anno => {
+                                    return fetch("http://tinymatt.rerum.io/gloss/delete", {
+                                        method: "DELETE",
+                                        body: anno["@id"]
+                                    })
+                                    .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
+                                    .catch(err=>{ throw err })
+                                })
+                                Promise.all(all).then(success => {
+                                    document.querySelector(`[deer-id="${id}"]`).closest("li").remove()
+                                })
+                            })
+                            .catch(err => console.error(`Failed to delete: ${err}`))
+                    }
+                }
+
+            }
+        }
     } catch (err) {
         console.log("Could not build list template.")
         console.error(err)
