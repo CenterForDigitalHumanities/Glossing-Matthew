@@ -114,8 +114,8 @@
 
         })
         window.onhashchange = onload = () => {
-            let msid = window.location.hash.substr(1)
-            document.getElementById("named-gloss").setAttribute("deer-id", msid)
+            let ngID = window.location.hash.substr(1)
+            document.getElementById("named-gloss").setAttribute("deer-id", ngID)
             const broadcast = function (event = {}, type, element, obj = {}) {
                 let e = new CustomEvent(type, { detail: Object.assign(obj, { target: event.target }), bubbles: true })
                 element.dispatchEvent(e)
