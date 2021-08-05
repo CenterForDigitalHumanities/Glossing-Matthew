@@ -22,19 +22,30 @@
             <input type="text" deer-key="title" placeholder="Label" class="col-9 col-10-md">
             <label class="col-3 col-2-md text-right">Description:</label>
             <input type="text" deer-key="description" placeholder="notes" class="col-9 col-4-md">
-            <label class="col-3 col-2-md text-right">Tags:</label>
-            <input type="text" deer-key-todo="TODO" placeholder="Tags..." class="col-9 col-4-md">
-            <label class="col-3 col-2-md text-right">Connected Text/Phrases:</label>
-            <input type="text" deer-key-todo="TODO" placeholder="Text/Phrases..." class="col-9 col-4-md">
+
+            <!-- Could maybe be a template -->
+            <input type="hidden" deer-key-todo="tags" deer-input-type="Set">
+            <select multiple oninput="handleMultiSelect(event, false)">
+                <option value="Tag1">Tag1</option>
+                <option value="Tag2">Tag2</option>
+                <option value="Tag3">Tag3</option>
+                <option value="Tag4">Tag4</option>
+            </select>
+            <div class="selectedEntities"></div>
+
             <label class="col-3 col-2-md text-right">Chapter</label>
-            <input type="text" deer-key-todo="TODO" placeholder="Chapters..." class="col-9 col-4-md">
+            <input type="number" deer-key="targetChapter" placeholder="0" class="col-9 col-4-md">
             <label class="col-3 col-2-md text-right">Verse</label>
-            <input type="text" deer-key-todo="TODO" placeholder="Chapter:Verses..." class="col-9 col-4-md">
-            <label class="col-3 col-2-md text-right">Specific T-PEN lines pertaining to this Gloss</label>
-            <input type="text" deer-key-todo="TODO" placeholder="T-PEN Lines..." class="col-9 col-4-md">  
-            <label class="col-3 col-2-md text-right">Notes:</label>
-            <input type="text" deer-key="notes" placeholder="notes" class="col-9 col-4-md">     
+            <input type="text" deer-key="targetVerse" placeholder="0-1" class="col-9 col-4-md">
+            <label class="col-3 col-2-md text-right">Notes</label>
+            <input type="text" deer-key="notes" placeholder="notes" class="col-9 col-4-md"> 
         </div>
+        <div class="row">
+                <label class="col-3 col-2-md text-right">Specific T-PEN lines pertaining to this Gloss</label>
+                <input type="hidden" deer-key-todo="TODO" >  
+                <deer-view id="folioLayout" deer-id="" class="send-id col-6" deer-template="glossLines"></deer-view>
+                <deer-view class="col-6 send-id" deer-id="" id="zoomy" deer-template="osd"></deer-view>
+            </div> 
         <input type="submit" value="update" class="col">
         <a href="./named-glosses.html" onclick="deleteThis(event)" class="text-error">Drop from collection</a>
     </form>
@@ -83,6 +94,23 @@
                 })
             }
         }
+
+    function handleMultiSelect(event, fromTemplate){
+        let sel = event.target
+        let selectedTagsArea = sel.nextElementSibling
+        selectedTagsArea.innerHTML = ""
+        let arr_id = Array.from(sel.selectedOptions).map(option=>option.value)
+        let arr_names = Array.from(sel.selectedOptions).map(option=>option.text)
+        let input = (fromTemplate) ? sel.parentElement.previousElementSibling : sel.previousElementSibling
+        let delim = (input.hasAttribute("deer-array-delimeter")) ? input.getAttribute("deer-array-delimeter") : ","
+        let str_arr = arr_id.join(delim)
+        arr_names.forEach(selection => {
+           let tag = `<span class="tag is-small">${selection}</span>` 
+           selectedTagsArea.innerHTML += tag
+        })
+        input.value=str_arr
+        input.setAttribute("value", str_arr)
+    }
     </script>
 </body>
 
