@@ -206,6 +206,29 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
     }
 }
 
+DEER.TEMPLATES.folioTranscriptionForGloss = function (obj, options = {}) {
+    return {
+        html: obj.tpenProject ? `<div class="is-full-width"> <h3> ... loading preview ... </h3> </div>` : ``,
+        then: (elem) => {
+            fetch("http://t-pen.org/TPEN/manifest/" + obj.tpenProject.value)
+                .then(response => response.json())
+                .then(ms => elem.innerHTML = `
+                ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `
+                <div class="page">
+                    <h3>${b.label}</h3> <a href="./select-TPEN-lines-for-gloss.html#${ms['@id']}">(edit layout)</a>
+                    <div class="pull-right col-6">
+                        <img src="${b.images[0].resource['@id']}">
+                    </div>
+                        ${b.otherContent[0].resources.reduce((aa, bb) => aa += `
+                        <span class="line" title="${bb["@id"]}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}</span>
+                        `, ``)}
+                </div>
+                `, ``)}
+        `)
+        }
+    }
+}
+
 DEER.TEMPLATES.osd = function(obj, options ={}) {
     const imgURL = obj.sequences[0].canvases[options.index || 0].images[0].resource['@id']
     return {
@@ -403,20 +426,20 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 })
             }
 
-            const unassignmentButtons = elem.querySelectorAll("i.unassign")
-            for (const r of unassignmentButtons) {
-                r.addEventListener("click",e=>{
-                    e.preventDefault()
-                    const forLine = e.target.closest("line")
-                    if(forLine === null) { return false }
-                    let thisLine = forLine
-                    while (thisLine) {
-                        thisLine.classList.remove("selected")
-                        thisLine.classList.remove("just")
-                        thisLine = thisLine.nextElementSibling
-                    }
-                })
-            }
+            // const unassignmentButtons = elem.querySelectorAll("i.unassign")
+            // for (const r of unassignmentButtons) {
+            //     r.addEventListener("click",e=>{
+            //         e.preventDefault()
+            //         const forLine = e.target.closest("line")
+            //         if(forLine === null) { return false }
+            //         let thisLine = forLine
+            //         while (thisLine) {
+            //             thisLine.classList.remove("selected")
+            //             thisLine.classList.remove("just")
+            //             thisLine = thisLine.nextElementSibling
+            //         }
+            //     })
+            // }
 
             const selected = elem.querySelectorAll(".selected")
             for (const s of selected) {

@@ -15,6 +15,7 @@
             <a href="./manuscripts.html">📚 View Manuscripts</a>
         </div>
     </gm-header>
+    <h2> Add Named Gloss </h2>
     <form id="named-gloss" deer-type="NamedGloss" deer-context="http://purl.org/dc/terms">
         <input type="hidden" deer-key="targetCollection" value="Glossing-Matthew-Named-Glosses">
         <div class="row">
@@ -40,15 +41,19 @@
             <label class="col-3 col-2-md text-right">Notes</label>
             <input type="text" deer-key="notes" placeholder="notes" class="col-9 col-4-md"> 
         </div>
-        <div class="row">
-                <label class="col-3 col-2-md text-right">Specific T-PEN lines pertaining to this Gloss</label>
-                <input type="hidden" deer-key-todo="TODO" >  
-                <deer-view id="folioLayout" deer-id="" class="send-id col-6" deer-template="glossLines"></deer-view>
-                <deer-view class="col-6 send-id" deer-id="" id="zoomy" deer-template="osd"></deer-view>
-            </div> 
+
         <input type="submit" value="update" class="col">
         <a href="./named-glosses.html" onclick="deleteThis(event)" class="text-error">Drop from collection</a>
     </form>
+
+    <div class="row">
+        <!-- 
+          If this Gloss is connected with lines from different manuscripts, then we need to go into each manuscipt and get those lines.
+          Once gloss has an ID we can go to a line picking interface like layout.html#glossid where glossid is a TPEN project ID that is the transcription of the gloss.
+          The simplest way to do this is the normal flow for getting to layout.html, except also have a way for the user to get to the other picker
+        -->
+        <a href-after-save="select-TPEN-lines-for-Gloss.html#TPEN-Manifest-URI" >TODO: Select Manuscripts and Lines for this Gloss After Creation</a>
+    </div>
 
     <pre class="card bg-light is-hidden">
         <deer-view deer-template="entity" deer-listening="named-gloss">current state</deer-view>
@@ -79,7 +84,7 @@
                 let e = new CustomEvent(type, { detail: Object.assign(obj, { target: event.target }), bubbles: true })
                 element.dispatchEvent(e)
             }
-            broadcast(undefined, "deer-view", document, { set: [pageRanges] })
+            //broadcast(undefined, "deer-view", document, { set: [pageRanges] })
         }
 
         function deleteThis(event) {
