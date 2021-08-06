@@ -277,8 +277,11 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 <a class="tag is-small" data-change="remove">Deselect All</a>
                 <a class="tag is-small" data-change="toggle">Invert All</a>
             </div>
+            <div class="col">
+                <button id="saveBtn" role="button" style="visibility:hidden;">Save Changes</button>
+            </div>
                 ${c.otherContent[0].resources.reduce((aa, bb, i) => aa += `
-                <line title="${bb['@id']}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="unassign tag is-small bg-light text-dark">⭯</i></line>
+                <line title="${bb['@id'].split('/').pop()}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="unassign tag is-small bg-light text-dark">⭯</i></line>
                 `, ``)}
         </div>
         `,
@@ -293,7 +296,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 ti: "top intralinear",
                 li: "lower intralinear"
             }
-            const allLines = elem.getElementsByTagName("line")
+            const allLines = elem.querySelectorAll("line")
             for (const l of allLines) { l.addEventListener("click", selectLine) }
             function selectLine(event) {
                 const lastClick = document.querySelector("line.just")
@@ -323,6 +326,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 if (!line.classList.contains("located")) {
                     line.classList.add("just")
                 }
+                saveBtn.style.visibility="visible"
             }
 
             const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
@@ -343,24 +347,21 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                     }
                 })
             }
+            const classes = Object.keys(POSITIONS)
             const unassignmentButtons = elem.querySelectorAll("i.unassign")
             for (const r of unassignmentButtons) {
                 r.addEventListener("click", e => {
                     e.preventDefault()
+                    e.stopPropagation()
                     const forLine = e.target.closest("line")
                     if (forLine === null) { return false }
-                    const classes = Object.keys(POSITIONS)
-                    const location = Array.from(forLine.classList).filter(val => classes.includes(val))
+                    const location = Array.from(forLine.classList).filter(val => classes.includes(val))?.[0]
                     let thisLine = forLine
-                    while (thisLine) {
-                        if (!thisLine.classList.contains(location)) { break }
-
-                        thisLine.classList.remove(location)
-                        thisLine.classList.remove("located")
-                        thisLine.classList.remove("selected")
-                        thisLine.classList.remove("just")
+                    while (thisLine?.classList.contains(location)) {
+                        thisLine.classList.remove(location, "located", "selected", "just")
                         thisLine = thisLine.nextElementSibling
                     }
+                    saveBtn.style.visibility="visible"
                 })
             }
             const selected = elem.querySelectorAll(".selected")
@@ -368,6 +369,133 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 s.classList.add("located", assignment.split(/\s/).reduce((response, word) => response += word.slice(0, 1), ''))
                 s.classList.remove("just", "selected")
             }
+            saveBtn.addEventListener("click", saveLocations)
+            function saveLocations() {
+                const locationMap = new Map()
+                allLines.forEach(line => {
+                    const location = Array.from(line.classList).filter(val => classes.includes(val))?.[0]
+                    locationMap.set(line.getAttribute("title"), location ?? false)
+                })
+
+                const locationAnnotationId = document.querySelector("div.page").getAttribute("data-marginalia")
+                if(!locationAnnotationId) {
+                    throw new Error("URI for Annotation Location could not be found.")
+                }
+
+                /**
+                 * TODO: This is a dirty trick to make this save reliably. The annotation should be targeted to 
+                 * just the lines within the Canvas and this map should be iterated through instead.
+                 */
+                const locationAnnotation = {
+                    "@id": locationAnnotationId,
+                    "@type": "Annotation",
+                    "@context": "http://www.w3.org/ns/anno.jsonld",
+                    target: c['@id'],
+                    body: { locations: Object.fromEntries(locationMap.entries()) },
+                    motivation: "classifying"
+                }
+                fetch(DEER.URLS.OVERWRITE, {
+                    method: 'PUT',
+                    mode: 'cors',
+                    body: JSON.stringify(locationAnnotation)
+                }).then(res => {
+                    if (!res.ok) {
+                        throw Error(res.statusText)
+                    }
+                    const ev = new CustomEvent("Locations Update")
+                    globalFeedbackBlip(ev, `Locations updated successfully.`, true)
+                    saveBtn.style.visibility="hidden"
+                    return res.json()
+                }).catch(err => {
+                    const ev = new CustomEvent("Locations Update")
+                    globalFeedbackBlip(ev, `Locations update failed.`, false)
+                })
+            }
+            function globalFeedbackBlip(event, message, success) {
+                globalFeedback.innerText = message
+                globalFeedback.classList.add("show")
+                if (success) {
+                    globalFeedback.classList.add("bg-success")
+                } else {
+                    globalFeedback.classList.add("bg-error")
+                }
+                setTimeout(function () {
+                    globalFeedback.classList.remove("show")
+                    globalFeedback.classList.remove("bg-error")
+                    // backup to page before the form
+                    UTILS.broadcast(event, "globalFeedbackFinished", globalFeedback, { message: message })
+                }, 3000)
+            }
+            function highlightLocations() {
+                const pageElement = document.querySelector("div.page")
+                const historyWildcard = { $exists: true, $type: 'array', $eq: [] }
+
+                const query = {
+                    target: c['@id'],
+                    motivation: "classifying",
+                    'body.locations': { $exists: true },
+                    '__rerum.history.next': historyWildcard
+                }
+
+                fetch(DEER.URLS.QUERY, {
+                    method: 'POST',
+                    mode: 'cors',
+                    body: JSON.stringify(query)
+                }).then(res => {
+                    if (!res.ok) {
+                        throw Error(res.statusText)
+                    }
+                    return res.json()
+                }).then(annotations => {
+                    if (annotations.length === 0) {
+                        // no results
+                        const locationAnnotation = {
+                            "@type": "Annotation",
+                            "@context": "http://www.w3.org/ns/anno.jsonld",
+                            target: c['@id'],
+                            body: { locations: {} },
+                            motivation: "classifying"
+                        }
+
+                        fetch(DEER.URLS.CREATE, {
+                            method: 'POST',
+                            mode: 'cors',
+                            headers: {
+                                'Content-Type': 'application/ld+json'
+                            },
+                            body: JSON.stringify(locationAnnotation)
+                        }).then(res => {
+                            if (!res.ok) {
+                                throw Error(res.statusText)
+                            }
+                            return res.json()
+                        }).then(loc => {
+                            const ev = new CustomEvent("Marginalia locations loaded")
+                            globalFeedbackBlip(ev, `Marginalia locations loaded`, true)
+                            pageElement.setAttribute("data-marginalia", loc.new_obj_state['@id'])
+                        })
+                            .catch(err => console.error(err))
+
+                    } else {
+                        drawAssignment(annotations[0].body.locations)
+                        pageElement.setAttribute("data-marginalia", annotations[0]['@id'])
+                    }
+                })
+                    .catch(err => {
+                        const ev = new CustomEvent("Location annotation query")
+                        globalFeedbackBlip(ev, `Please reload. This crashed. ${err}`, false)
+                    })
+
+                function drawAssignment(glossLines) {
+                    for (const line in glossLines) {
+                        const el = document.querySelector(`line[title="${line}"]`)
+                        if (!el) { continue }
+                        const locatedClass = glossLines[line] ? `located ${glossLines[line]}` : ""
+                        el.className = locatedClass
+                    }
+                }
+            }
+            highlightLocations()
         }
     }
 }
