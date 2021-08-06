@@ -357,7 +357,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
             tmpl += `<ul>`
             obj[options.list].forEach((val, index) => {
                 const removeBtn = `<a href="${val['@id']}" class="removeCollectionItem" title="Delete This Entry">&#x274C</a>`
-                const visibilityBtn = `<a onclick="togglePublic(event)" href="${val['@id']}" title="Toggle public visibility"> 👁 </a>`
+                const visibilityBtn = `<a class="togglePublic" href="${val['@id']}" title="Toggle public visibility"> 👁 </a>`
                 tmpl += `<li>
                 ${visibilityBtn}
                 <a href="${options.link}${val['@id']}">
@@ -375,12 +375,31 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
         return {
             html: tmpl,
             then: elem => {
+
+                fetch("http://store.rerum.io/v1/id/610c54deffce846a83e70625").then(r=>r.json())
+                .then(list=>{
+                    elem.experiences = new Set(list.itemListElement['@id'])
+                    for (const a of document.querySelectorAll('togglePublic')) {
+                        const include = elem.experiences.has(a.getAttribute("href")) ? "add" : "remove"
+                        elem.classList[include]("is-included")
+                    }
+                })
+
                 document.querySelectorAll(".removeCollectionItem").forEach(el => el.addEventListener('click', (ev) => {
                     ev.preventDefault()
                     ev.stopPropagation()
                     const itemID = el.getAttribute("href")
                     const fromCollection = document.querySelector('input[deer-collection]').getAttribute("deer-collection")
                     deleteThis(itemID, fromCollection)
+                }))
+                document.querySelectorAll('togglePublic').forEach(el=>el.addEventListener('click', ev=>{
+                    ev.preventDefault()
+                    ev.stopPropagation()
+                    const uri = el.getAttribute("href")
+                    const included = elem.manuscripts.has(uri)
+                    elem.classList[included ? "remove" : "add"]("is-included")
+                    elem.manuscripts[included ? "delete" : "add"](uri)
+                    saveList.style.visibility = "visible"
                 }))
 
                 function deleteThis(id, collection) {
