@@ -398,7 +398,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
             html: tmpl,
             then: elem => {
 
-                fetch("http://store.rerum.io/v1/id/610ad6f1ffce846a83e70613").then(r => r.json())
+                fetch(elem.getAttribute("deer-listing")).then(r => r.json())
                     .then(list => {
                         elem.manuscripts = new Set()
                         list.itemListElement.forEach(item=>elem.manuscripts.add(item['@id']))
@@ -438,7 +438,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                     })
 
                     const list = {
-                        '@id': 'http://store.rerum.io/v1/id/610ad6f1ffce846a83e70613',
+                        '@id': elem.getAttribute("deer-listing"),
                         '@context': 'https://schema.org/',
                         '@type': "ItemList",
                         name: "Glossing Matthew Manuscripts",
