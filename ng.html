@@ -117,13 +117,19 @@
                 default:
 
             }
-
         })
+
+
         window.onhashchange = onload = () => {
             let ngID = window.location.hash.substr(1)
             document.getElementById("named-gloss").setAttribute("deer-id", ngID)
             if(ngID){
                 document.querySelector("input[type='submit']").value="Update"
+            }
+            else{
+                addEventListener('globalFeedbackFinished', event => {
+                    window.location.href = "./named-glosses.html"
+                })
             }
             const broadcast = function (event = {}, type, element, obj = {}) {
                 let e = new CustomEvent(type, { detail: Object.assign(obj, { target: event.target }), bubbles: true })
