@@ -67,7 +67,6 @@
 
         <!-- Note this could be a template or custom HTML element -->
         <div class="tagWidget row">
-            <!-- Could maybe be a template so we can deer-view it, nice to have for DEER event broadcases. -->
             <p class="col-12 col-12-md">Gloss tags are displayed below the input. Click the red 'x' to remove the tag.</p>
             <input type="hidden" deer-key="tags" deer-input-type="Set">
             <label class="col-3 col-2-md text-right" >Tag Name</label>
@@ -157,11 +156,12 @@
             let selectedTagsArea = document.getElementById("knownTags")
             const tagInput = event.target.previousElementSibling
             let tracked_tags = document.querySelector("input[deer-key='tags']")
+            tracked_tags.value = tracked_tags.value.toLowerCase()
             const delim = (tracked_tags.hasAttribute("deer-array-delimeter")) ? tracked_tags.getAttribute("deer-array-delimeter") : ","
-            const newTagName = tagInput.value
-            selectedTagsArea.innerHTML = ""
+            const newTagName = tagInput.value.toLowerCase()
             let arr_tag_names = tracked_tags.value ? tracked_tags.value.split(delim) : []
             if (arr_tag_names.indexOf(newTagName) === -1) {
+              selectedTagsArea.innerHTML = ""
               arr_tag_names.push(newTagName)
               arr_tag_names.forEach(name => {
                let tag = `<span class="tag is-small">${name}<span class="removeTag" onclick="removeTag(event, '${name}')"></span></span>` 
@@ -172,6 +172,9 @@
                 tracked_tags.value=str_arr
                 tracked_tags.setAttribute("value", str_arr)
                 tracked_tags.$isDirty = true
+            }
+            else{
+                tagInput.value = ""
             }
         }
 
@@ -213,13 +216,15 @@
         function removeTag(event, tagName){
             event.preventDefault()
             event.stopPropagation()
+            tagName = tagName.toLowerCase()
             let selectedTagsArea = document.getElementById("knownTags")
             let tracked_tags = document.querySelector("input[deer-key='tags']")
+            tracked_tags.value = tracked_tags.value.toLowerCase()
             let delim = (tracked_tags.hasAttribute("deer-array-delimeter")) ? tracked_tags.getAttribute("deer-array-delimeter") : ","
-            selectedTagsArea.innerHTML = ""
             let arr_tag_names = tracked_tags.value ? tracked_tags.value.split(delim) : []
             if (arr_tag_names.indexOf(tagName) > -1) {
-              arr_tag_names.splice(index, 1)
+              selectedTagsArea.innerHTML = ""
+              arr_tag_names.splice(arr_tag_names.indexOf(tagName), 1)
               arr_tag_names.forEach(name => {
                let tag = `<span class="tag is-small">${name}<span class="removeTag" onclick="removeTag(event, '${name}')"></span></span>` 
                selectedTagsArea.innerHTML += tag
@@ -228,6 +233,9 @@
                 tracked_tags.value=str_arr
                 tracked_tags.setAttribute("value", str_arr)
                 tracked_tags.$isDirty = true
+            }
+            else{
+                tagInput.value = ""
             }
         }
 
