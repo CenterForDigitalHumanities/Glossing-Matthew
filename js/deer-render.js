@@ -229,7 +229,7 @@ DEER.TEMPLATES.folioTranscriptionForGloss = function (obj, options = {}) {
     }
 }
 
-DEER.TEMPLATES.osd = function(obj, options ={}) {
+DEER.TEMPLATES.osd = function (obj, options = {}) {
     const imgURL = obj.sequences[0].canvases[options.index || 0].images[0].resource['@id']
     return {
         html: ``,
@@ -398,31 +398,61 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
             html: tmpl,
             then: elem => {
 
-                fetch("http://store.rerum.io/v1/id/610c54deffce846a83e70625").then(r=>r.json())
-                .then(list=>{
-                    elem.experiences = new Set(list.itemListElement['@id'])
-                    for (const a of document.querySelectorAll('togglePublic')) {
-                        const include = elem.experiences.has(a.getAttribute("href")) ? "add" : "remove"
-                        elem.classList[include]("is-included")
-                    }
-                })
+                fetch("http://store.rerum.io/v1/id/610ad6f1ffce846a83e70613").then(r => r.json())
+                    .then(list => {
+                        elem.manuscripts = new Set()
+                        list.itemListElement.forEach(item=>elem.manuscripts.add(item['@id']))
+                        for (const a of document.querySelectorAll('.togglePublic')) {
+                            const include = elem.manuscripts.has(a.getAttribute("href")) ? "add" : "remove"
+                            a.classList[include]("is-included")
+                        }
+                    })
+                    .then(()=>{
+                        document.querySelectorAll(".removeCollectionItem").forEach(el => el.addEventListener('click', (ev) => {
+                            ev.preventDefault()
+                            ev.stopPropagation()
+                            const itemID = el.getAttribute("href")
+                            const fromCollection = document.querySelector('input[deer-collection]').getAttribute("deer-collection")
+                            deleteThis(itemID, fromCollection)
+                        }))
+                        document.querySelectorAll('.togglePublic').forEach(a => a.addEventListener('click', ev => {
+                            ev.preventDefault()
+                            ev.stopPropagation()
+                            const uri = a.getAttribute("href")
+                            const included = elem.manuscripts.has(uri)
+                            a.classList[included ? "remove" : "add"]("is-included")
+                            elem.manuscripts[included ? "delete" : "add"](uri)
+                            saveList.style.visibility = "visible"
+                        }))
+                        saveList.addEventListener('click', overwriteList)
+                    })
 
-                document.querySelectorAll(".removeCollectionItem").forEach(el => el.addEventListener('click', (ev) => {
-                    ev.preventDefault()
-                    ev.stopPropagation()
-                    const itemID = el.getAttribute("href")
-                    const fromCollection = document.querySelector('input[deer-collection]').getAttribute("deer-collection")
-                    deleteThis(itemID, fromCollection)
-                }))
-                document.querySelectorAll('togglePublic').forEach(el=>el.addEventListener('click', ev=>{
-                    ev.preventDefault()
-                    ev.stopPropagation()
-                    const uri = el.getAttribute("href")
-                    const included = elem.manuscripts.has(uri)
-                    elem.classList[included ? "remove" : "add"]("is-included")
-                    elem.manuscripts[included ? "delete" : "add"](uri)
-                    saveList.style.visibility = "visible"
-                }))
+
+                function overwriteList() {
+                    let mss = []
+                    elem.manuscripts.forEach(uri => {
+                        mss.push({
+                            label: document.querySelector(`deer-view[deer-id='${uri}']`).textContent.trim(),
+                            '@id': uri
+                        })
+                    })
+
+                    const list = {
+                        '@id': 'http://store.rerum.io/v1/id/610ad6f1ffce846a83e70613',
+                        '@context': 'https://schema.org/',
+                        '@type': "ItemList",
+                        name: "Glossing Matthew Manuscripts",
+                        numberOfItems: elem.manuscripts.size,
+                        itemListElement: mss
+                    }
+
+                    fetch(DEER.URLS.OVERWRITE, {
+                        method: "PUT",
+                        mode: 'cors',
+                        body: JSON.stringify(list)
+                    }).then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
+                        .catch(err => alert(`Failed to save: ${err}`))
+                }
 
                 function deleteThis(id, collection) {
                     if (confirm("Really remove this record?\n(Cannot be undone)")) {
@@ -440,21 +470,21 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                             method: "POST",
                             body: JSON.stringify(queryObj)
                         })
-                            .then(r => r.ok ? r.json() : Promise.reject(new Error(r?.text)))
-                            .then(annos => {
-                                let all = annos.map(anno => {
-                                    return fetch("http://tinymatt.rerum.io/gloss/delete", {
-                                        method: "DELETE",
-                                        body: anno["@id"]
-                                    })
+                        .then(r => r.ok ? r.json() : Promise.reject(new Error(r?.text)))
+                        .then(annos => {
+                            let all = annos.map(anno => {
+                                return fetch("http://tinymatt.rerum.io/gloss/delete", {
+                                    method: "DELETE",
+                                    body: anno["@id"]
+                                })
                                     .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
-                                    .catch(err=>{ throw err })
-                                })
-                                Promise.all(all).then(success => {
-                                    document.querySelector(`[deer-id="${id}"]`).closest("li").remove()
-                                })
+                                    .catch(err => { throw err })
                             })
-                            .catch(err => console.error(`Failed to delete: ${err}`))
+                            Promise.all(all).then(success => {
+                                document.querySelector(`[deer-id="${id}"]`).closest("li").remove()
+                            })
+                        })
+                        .catch(err => console.error(`Failed to delete: ${err}`))
                     }
                 }
 

@@ -18,7 +18,7 @@
         </div>
     </gm-header>
     <h1 class="text-primary"> Managing Glossing Matthew Manuscripts </h1>
-    <button id="saveExperiences" class="is-hidden button primary" role="button" onclick="saveList()">Save List</button>
+    <button id="saveList" style="visibility: hidden;" class="button primary" role="button">Save List</button>
     <div class="row">
         <deer-view id="collectionList" deer-collection="Glossing-Matthew-dev" deer-link="ms.html#" deer-template="managedlist">
             Loading&hellip;
@@ -39,36 +39,7 @@
     </gm-footer>
     <div id="globalFeedback" class="card is-center"></div>
     <script src="js/deer.js" type="module"></script>
-    <script src="js/app.js" type="module"></script>    <script>      
-
-        function saveList(){
-            const experiences = []
-            LR.ui.experiences.forEach(uri=>{
-                experiences.push({
-                    label:document.querySelector(`deer-view[deer-id='${uri}']`).textContent.trim(),
-                    '@id':uri
-                })
-            })
-
-            list = {
-                '@id':LR.PUBLIC_EXPERIENCE_LIST,
-                '@context':'https://schema.org/',
-                '@type': "ItemList",
-                name: "LRDA-STL Public Experiences",
-                numberOfItems: LR.ui.experiences.size,
-                itemListElement: experiences
-            }
-            fetch(LR.URLS.OVERWRITE,{
-                method: "PUT",
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                mode: 'cors',
-                body: JSON.stringify(list)
-            }).then(r=>r.ok?r.json():Promise.reject(Error(r.text)))
-            .catch(err=>alert(`Failed to save: ${err}`))
-        }
-    </script>
+    <script src="js/app.js" type="module"></script> 
 </body>
 
 </html>
