@@ -7,14 +7,25 @@
     <link href="favicon.ico" rel="icon" type="image/x-icon" />
     <style>
         .tagWidget{
-            border: 2px solid black;
+            margin-bottom: 15px;
         }
 
         .removeTag:after {
             content: 'x';
             color: red;
-            border: 1px solid black;
-            padding: 2px;
+            padding: 1px 1px 1px 7px;
+        }
+
+        button.smaller{
+            padding: 0px 5px;
+            height: 2.2em;
+        }
+
+        #knownTags{
+            border-left: 1px dotted black;
+            border-bottom: 1px dotted black;
+            border-right: 1px dotted black;
+            padding: 4px;
         }
     </style>
 </head>
@@ -52,7 +63,7 @@
             <input type="hidden" deer-key="tags" deer-input-type="Set">
             <label class="col-3 col-2-md text-right">Tag Name</label>
             <input id="tagInput" type="text" class="col-9 col-4-md">
-            <button id="addTagBtn" onclick="addTag(event)"> Add Tag </button>
+            <button class="smaller" id="addTagBtn" onclick="addTag(event)"> Add Tag </button>
             <div id="knownTags" class="selectedEntities col-12 col-12-md"></div>
         </div>
         
@@ -82,17 +93,6 @@
     <script src="js/deer.js" type="module"></script>
     <script src="js/app.js" type="module"></script>
     <script>
-
-         /**
-         * Detects that HTML has finished drawing in the DOM and can be interacted with.
-         * This most often occures when drawing a deer-view on page load or from redraws.
-         * @see deer-render.js RENDER.element
-         */
-        addEventListener('deer-view-rendered', event => {
-            let whatElem = event.target
-            let whatData = event.detail
-        })
-
         /**
          * Detects that all annotation data is gathered and all HTML of the form is in the DOM and can be interacted with.
          * This is important for pre-filling or pre-selecting values of multi select areas, dropdown, checkboxes, etc. 
@@ -137,6 +137,10 @@
             }
         }
 
+        /**
+         * Click event handler for #addTag.  Takes the user input and adds the string to the Set if it isn't already included.
+         * Includes pagination.
+         * */
         function addTag(event){
             event.preventDefault()
             event.stopPropagation()
@@ -147,21 +151,25 @@
             const newTagName = tagInput.value
             selectedTagsArea.innerHTML = ""
             let arr_tag_names = tracked_tags.value ? tracked_tags.value.split(delim) : []
-            const index = arr_tag_names.indexOf(tagName)
-            if (index === -1) {
+            if (arr_tag_names.indexOf(newTagName) === -1) {
               arr_tag_names.push(newTagName)
-            }
-            arr_tag_names.forEach(name => {
+              arr_tag_names.forEach(name => {
                let tag = `<span class="tag is-small">${name}<span class="removeTag" onclick="removeTag(event, '${name}')"></span></span>` 
                selectedTagsArea.innerHTML += tag
-            })
-            tagInput.value=""
-            const str_arr = arr_tag_names.join(delim)
-            tracked_tags.value=str_arr
-            tracked_tags.setAttribute("value", str_arr)
-            tracked_tags.$isDirty = true
+                })
+                tagInput.value=""
+                const str_arr = arr_tag_names.join(delim)
+                tracked_tags.value=str_arr
+                tracked_tags.setAttribute("value", str_arr)
+                tracked_tags.$isDirty = true
+            }
         }
 
+        /**
+         * Helper function for the specialized tags area in the deer form.  This takes the Annotation
+         * containing the Set, gets the value, and populates it to the hidden input for tags.
+         * It also draws existing tags to the UI.
+         * */
         function prefillTagsArea(tagData, form=document.getElementById("named-glosses")){
             if(tagData === undefined){
                 console.warn("Cannot set value for tags and build UI.  There is no data.")
@@ -185,6 +193,11 @@
             })
         }
 
+        /**
+         * Click event handler for .removeTag when the user clicks the little x. 
+         * Removes tag from the set of known tags (if included, it really should be though.)
+         * Includes pagination.
+         * */
         function removeTag(event, tagName){
             event.preventDefault()
             event.stopPropagation()
@@ -193,18 +206,17 @@
             let delim = (tracked_tags.hasAttribute("deer-array-delimeter")) ? tracked_tags.getAttribute("deer-array-delimeter") : ","
             selectedTagsArea.innerHTML = ""
             let arr_tag_names = tracked_tags.value ? tracked_tags.value.split(delim) : []
-            const index = arr_tag_names.indexOf(tagName)
-            if (index > -1) {
-              arr_tag_names.splice(index, 1);
-            }
-            arr_tag_names.forEach(name => {
+            if (arr_tag_names.indexOf(tagName) > -1) {
+              arr_tag_names.splice(index, 1)
+              arr_tag_names.forEach(name => {
                let tag = `<span class="tag is-small">${name}<span class="removeTag" onclick="removeTag(event, '${name}')"></span></span>` 
                selectedTagsArea.innerHTML += tag
-            })
-            let str_arr = arr_tag_names.join(delim)
-            tracked_tags.value=str_arr
-            tracked_tags.setAttribute("value", str_arr)
-            tracked_tags.$isDirty = true
+                })
+                let str_arr = arr_tag_names.join(delim)
+                tracked_tags.value=str_arr
+                tracked_tags.setAttribute("value", str_arr)
+                tracked_tags.$isDirty = true
+            }
         }
 
         /**
