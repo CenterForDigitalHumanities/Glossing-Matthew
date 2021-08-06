@@ -224,6 +224,9 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 <a class="tag is-small" data-change="add">Select All</a>
                 <a class="tag is-small" data-change="remove">Deselect All</a>
             </div>
+            <div class="col">
+                <button id="saveBtn" role="button" style="visibility:hidden;">Save Changes</button>
+            </div>
                 ${c.otherContent[0].resources.reduce((aa, bb, i) => aa += `
                 <line title="${bb['@id']}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="unassign tag is-small bg-light text-dark">⭯</i></line>
                 `, ``)}
@@ -232,10 +235,10 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
         then: elem => {
             const allLines = elem.getElementsByTagName("line")
             for (const l of allLines) { l.addEventListener("click", selectLine) }
+
             function selectLine(event) {
                 const lastClick = document.querySelector("line.just")
                 const line = event.target.closest("line")
-
                 if (lastClick && event.shiftKey) {
                     // band-select
                     const change = lastClick.classList.contains("selected") // change is constant
@@ -252,11 +255,9 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 } else{
                     line.classList.toggle("selected")
                 }
-
                 if (lastClick) { lastClick.classList.remove("just") }
-                
                 line.classList.add("just")
-                
+                saveBtn.style.visibility="visible"
             }
 
             const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
@@ -286,8 +287,8 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
             for (const s of selected) {
                 s.classList.remove("just", "selected")
             }
-
             saveBtn.addEventListener("click", connectLinesWithNamedGloss)
+            
             function connectLinesWithNamedGloss() {
                 const tpen_line_ids = allLines.map(line => {
                     return line.getAttribute("title")
