@@ -115,11 +115,8 @@
                     prefillTagsArea(annotationData["tags"], event.target)
                     break
                 default:
-
             }
         })
-
-
         window.onhashchange = onload = () => {
             let ngID = window.location.hash.substr(1)
             document.getElementById("named-gloss").setAttribute("deer-id", ngID)
