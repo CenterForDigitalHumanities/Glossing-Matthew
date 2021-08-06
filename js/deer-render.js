@@ -306,7 +306,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                     "@type": "Annotation",
                     "@context": "http://www.w3.org/ns/anno.jsonld",
                     target: c['@id'],
-                    body: { "_tpen_lines":tpen_line_ids },
+                    body: {"_tpen_lines": {"@type":"Set", "items":tpen_line_ids}},
                     motivation: "classifying"
                 }
                 /*
