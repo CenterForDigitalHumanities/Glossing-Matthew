@@ -24,12 +24,12 @@ export default {
     PRIMITIVES: [],
 
     URLS: {
-        BASE_ID: "http://store.rerum.io/v1",
-        CREATE: "http://tinymatt.rerum.io/gloss/create",
-        UPDATE: "http://tinymatt.rerum.io/gloss/update",
-        QUERY: "http://tinymatt.rerum.io/gloss/query",
-        OVERWRITE: "http://tinymatt.rerum.io/gloss/overwrite",
-        SINCE: "http://store.rerum.io/v1/since"
+        BASE_ID: "http://devstore.rerum.io/v1",
+        CREATE: "http://tinydev.rerum.io/app/create",
+        UPDATE: "http://tinydev.rerum.io/app/update",
+        QUERY: "http://tinydev.rerum.io/app/query",
+        OVERWRITE: "http://tinydev.rerum.io/app/overwrite",
+        SINCE: "http://devstore.rerum.io/v1/since"
     },    
 
     EVENTS: {
@@ -70,7 +70,22 @@ export default {
                 tmpl += `</ul>`
             }
             return tmpl
-        }
+        },
+        ngList: function (obj, options = {}) {
+            let tmpl = `<h2>Named Glosses</h2>`
+            if (options.list) {
+                tmpl += `<ul>`
+                obj[options.list].forEach((val, index) => {
+                    tmpl += `<li>
+                    <a href="${options.link}${val['@id']}">
+                    <deer-view deer-id="${val["@id"]}" deer-template="label">${index+1}</deer-view>
+                    </a>
+                    </li>`
+                })
+                tmpl += `</ul>`
+            }
+            return tmpl
+        },
     },
     version: "alpha"
 }

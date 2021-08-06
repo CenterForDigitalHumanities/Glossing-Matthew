@@ -206,7 +206,30 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
     }
 }
 
-DEER.TEMPLATES.osd = function (obj, options = {}) {
+DEER.TEMPLATES.folioTranscriptionForGloss = function (obj, options = {}) {
+    return {
+        html: obj.tpenProject ? `<div class="is-full-width"> <h3> ... loading preview ... </h3> </div>` : ``,
+        then: (elem) => {
+            fetch("http://t-pen.org/TPEN/manifest/" + obj.tpenProject.value)
+                .then(response => response.json())
+                .then(ms => elem.innerHTML = `
+                ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `
+                <div class="page">
+                    <h3>${b.label}</h3> <a href="./select-TPEN-lines-for-gloss.html#${ms['@id']}">(edit layout)</a>
+                    <div class="pull-right col-6">
+                        <img src="${b.images[0].resource['@id']}">
+                    </div>
+                        ${b.otherContent[0].resources.reduce((aa, bb) => aa += `
+                        <span class="line" title="${bb["@id"]}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}</span>
+                        `, ``)}
+                </div>
+                `, ``)}
+        `)
+        }
+    }
+}
+
+DEER.TEMPLATES.osd = function(obj, options ={}) {
     const imgURL = obj.sequences[0].canvases[options.index || 0].images[0].resource['@id']
     return {
         html: ``,
@@ -336,7 +359,6 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                         thisLine.classList.remove("located")
                         thisLine.classList.remove("selected")
                         thisLine.classList.remove("just")
-
                         thisLine = thisLine.nextElementSibling
                     }
                 })
@@ -527,7 +549,6 @@ DEER.TEMPLATES.person = function (obj, options = {}) {
     } catch (err) {
         return null
     }
-    return null
 }
 
 /**
@@ -563,32 +584,32 @@ DEER.TEMPLATES.pageRanges = function (obj, options = {}) {
  * @param {Object} obj some json of type Person to be drawn
  * @param {Object} options additional properties to draw with the Person
  */
-DEER.TEMPLATES.canvasDropdown = function (obj, options = {}) {
-    return null
-    try {
-        let tmpl = `<form deer-type="Range" deer-context="http://iiif.io/api/image/3/context.json">
-        <input type="hidden" deer-key="isPartOf" value="${obj['@id']}">
-        <input type="hidden" deer-key="motivation" value="supplementing">
+// DEER.TEMPLATES.canvasDropdown = function (obj, options = {}) {
+//     return null
+//     try {
+//         let tmpl = `<form deer-type="Range" deer-context="http://iiif.io/api/image/3/context.json">
+//         <input type="hidden" deer-key="isPartOf" value="${obj['@id']}">
+//         <input type="hidden" deer-key="motivation" value="supplementing">
 
-startFolio
-endFolio
-Disposition
-Illuminated Initials
-Gloss ID
-General Target
-Specific Target
-Gloss Type
-Gloss Location
+// startFolio
+// endFolio
+// Disposition
+// Illuminated Initials
+// Gloss ID
+// General Target
+// Specific Target
+// Gloss Type
+// Gloss Location
 
-        <input type="submit">
-        </form>`
+//         <input type="submit">
+//         </form>`
 
-        return tmpl
-    } catch (err) {
-        return null
-    }
-    return null
-}
+//         return tmpl
+//     } catch (err) {
+//         return null
+//     }
+//     return null
+// }
 
 
 /**
@@ -603,7 +624,6 @@ DEER.TEMPLATES.event = function (obj, options = {}) {
     } catch (err) {
         return null
     }
-    return null
 }
 
 export default class DeerRender {
