@@ -24,12 +24,12 @@ export default {
     PRIMITIVES: [],
 
     URLS: {
-        BASE_ID: "http://devstore.rerum.io/v1",
-        CREATE: "http://tinydev.rerum.io/app/create",
-        UPDATE: "http://tinydev.rerum.io/app/update",
-        QUERY: "http://tinydev.rerum.io/app/query",
-        OVERWRITE: "http://tinydev.rerum.io/app/overwrite",
-        SINCE: "http://devstore.rerum.io/v1/since"
+        BASE_ID: "http://store.rerum.io/v1",
+        CREATE: "http://tinymatt.rerum.io/gloss/create",
+        UPDATE: "http://tinymatt.rerum.io/gloss/update",
+        QUERY: "http://tinymatt.rerum.io/gloss/query",
+        OVERWRITE: "http://tinymatt.rerum.io/gloss/overwrite",
+        SINCE: "http://store.rerum.io/v1/since"
     },    
 
     EVENTS: {
