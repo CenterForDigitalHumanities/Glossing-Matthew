@@ -13,7 +13,7 @@
 
 import { default as UTILS } from './deer-utils.js'
 import { default as config } from './deer-config.js'
-import { OpenSeadragon} from './openseadragon.js'
+import { OpenSeadragon } from './openseadragon.js'
 
 const changeLoader = new MutationObserver(renderChange)
 var DEER = config
@@ -192,7 +192,9 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
                 .then(ms => elem.innerHTML = `
                 ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `
                 <div class="page">
-                    <h3>${b.label}</h3> <a href="./layout.html#${ms['@id']}">(edit layout)</a>
+                    <h3>${b.label}</h3> 
+                    <a href="./layout.html#${ms['@id']}">(edit layout)</a>
+                    <a href="./select-TPEN-lines-for-gloss.html#${ms['@id']}">(edit included lines)</a>
                     <div class="pull-right col-6">
                         <img src="${b.images[0].resource['@id']}">
                     </div>
@@ -206,20 +208,145 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
     }
 }
 
+DEER.TEMPLATES.glossLines = function (obj, options = {}) {
+    //TODO we need to know the GlossID here as well.
+    let c = obj.sequences[0].canvases[options.index || 0]
+    return {
+        html: `
+        <div class="page">
+            <h3>${c.label}</h3>
+            <div class="col">
+                <script>
+                    function batchLine(change) {
+                        [...document.getElementsByTagName("line")].forEach(l=>{l.classList[change]("selected");l.classList.remove("just")})
+                    }
+                </script>
+                <a class="tag is-small" data-change="add">Select All</a>
+                <a class="tag is-small" data-change="remove">Deselect All</a>
+                <a class="tag is-small" data-change="toggle">Invert All</a>
+            </div>
+                ${c.otherContent[0].resources.reduce((aa, bb, i) => aa += `
+                <line title="${bb['@id']}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="unassign tag is-small bg-light text-dark">⭯</i></line>
+                `, ``)}
+        </div>
+        `,
+        then: elem => {
+            const allLines = elem.getElementsByTagName("line")
+            for (const l of allLines) { l.addEventListener("click", selectLine) }
+            function selectLine(event) {
+                const lastClick = document.querySelector("line.just")
+                const line = event.target.closest("line")
+
+                if (lastClick && event.shiftKey) {
+                    // band-select
+                    const change = lastClick.classList.contains("selected") // change is constant
+                        ? "add"
+                        : "remove"
+                    const lookNext = parseInt(lastClick.getAttribute("index")) < parseInt(line.getAttribute("index"))
+                        ? "nextElementSibling"
+                        : "previousElementSibling"
+                    let changeLine = lastClick
+                    do {
+                        changeLine = changeLine[lookNext]
+                            changeLine.classList[change]("selected")
+                    } while (changeLine !== line)
+                } else{
+                    line.classList.toggle("selected")
+                }
+
+                if (lastClick) { lastClick.classList.remove("just") }
+                
+                line.classList.add("just")
+                
+            }
+
+            const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
+            for (const b of controls) {
+                b.addEventListener("click",e=>{
+                    const change = e.target.getAttribute("data-change")
+                    Array.from(allLines).forEach(l=>{l.classList[change]("selected");l.classList.remove("just")})
+                })
+            }
+
+            const unassignmentButtons = elem.querySelectorAll("i.unassign")
+            for (const r of unassignmentButtons) {
+                r.addEventListener("click",e=>{
+                    e.preventDefault()
+                    const forLine = e.target.closest("line")
+                    if(forLine === null) { return false }
+                    let thisLine = forLine
+                    while (thisLine) {
+                        thisLine.classList.remove("selected")
+                        thisLine.classList.remove("just")
+                        thisLine = thisLine.nextElementSibling
+                    }
+                })
+            }
+
+            const selected = elem.querySelectorAll(".selected")
+            for (const s of selected) {
+                s.classList.remove("just", "selected")
+            }
+
+            saveBtn.addEventListener("click", connectLinesWithNamedGloss)
+            function connectLinesWithNamedGloss() {
+                const tpen_line_ids = allLines.map(line => {
+                    return line.getAttribute("title")
+                })
+                const linesAnnotationId = document.querySelector("div.page").getAttribute("data-marginalia")
+                if(!linesAnnotationId) {
+                    throw new Error("URI for Annotation could not be found.")
+                }
+
+                /**
+                 * TODO: This is a dirty trick to make this save reliably. The annotation should be targeted to 
+                 * just the lines within the Canvas and this map should be iterated through instead.
+                 */
+                const linesAnnotation = {
+                    "@id": linesAnnotationId,
+                    "@type": "Annotation",
+                    "@context": "http://www.w3.org/ns/anno.jsonld",
+                    target: c['@id'],
+                    body: { "_tpen_lines":tpen_line_ids },
+                    motivation: "classifying"
+                }
+                /*
+                fetch(DEER.URLS.OVERWRITE, {
+                    method: 'PUT',
+                    mode: 'cors',
+                    body: JSON.stringify(linesAnnotation)
+                }).then(res => {
+                    if (!res.ok) {
+                        throw Error(res.statusText)
+                    }
+                    const ev = new CustomEvent("Lines Update")
+                    globalFeedbackBlip(ev, `Lines updated successfully.`, true)
+                    saveBtn.style.visibility="hidden"
+                    return res.json()
+                }).catch(err => {
+                    const ev = new CustomEvent("Lines Update")
+                    globalFeedbackBlip(ev, `Lines update failed.`, false)
+                })
+                */
+            }
+        }
+    }
+}
+
 DEER.TEMPLATES.osd = function(obj, options ={}) {
     const imgURL = obj.sequences[0].canvases[options.index || 0].images[0].resource['@id']
     return {
         html: ``,
         then: elem => {
-                OpenSeadragon({
-                    id:elem.id,
-                    tileSources: {
-                        type: 'image',
-                        url:  imgURL,
-                        crossOriginPolicy: 'Anonymous',
-                        ajaxWithCredentials: false
-                    }
-                })
+            OpenSeadragon({
+                id: elem.id,
+                tileSources: {
+                    type: 'image',
+                    url: imgURL,
+                    crossOriginPolicy: 'Anonymous',
+                    ajaxWithCredentials: false
+                }
+            })
         }
     }
 }
@@ -254,8 +381,11 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 <a class="tag is-small" data-change="remove">Deselect All</a>
                 <a class="tag is-small" data-change="toggle">Invert All</a>
             </div>
+            <div class="col">
+                <button id="saveBtn" role="button" style="visibility:hidden;">Save Changes</button>
+            </div>
                 ${c.otherContent[0].resources.reduce((aa, bb, i) => aa += `
-                <line title="${bb['@id']}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="unassign tag is-small bg-light text-dark">⭯</i></line>
+                <line title="${bb['@id'].split('/').pop()}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="unassign tag is-small bg-light text-dark">⭯</i></line>
                 `, ``)}
         </div>
         `,
@@ -270,7 +400,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 ti: "top intralinear",
                 li: "lower intralinear"
             }
-            const allLines = elem.getElementsByTagName("line")
+            const allLines = elem.querySelectorAll("line")
             for (const l of allLines) { l.addEventListener("click", selectLine) }
             function selectLine(event) {
                 const lastClick = document.querySelector("line.just")
@@ -287,65 +417,189 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                     let changeLine = lastClick
                     do {
                         changeLine = changeLine[lookNext]
-                        if(!changeLine.classList.contains("located")){
+                        if (!changeLine.classList.contains("located")) {
                             changeLine.classList[change]("selected")
                         }
                     } while (changeLine !== line)
-                } else if(!line.classList.contains("located")){
+                } else if (!line.classList.contains("located")) {
                     line.classList.toggle("selected")
                 }
 
                 if (lastClick) { lastClick.classList.remove("just") }
 
-                if(!line.classList.contains("located")){
+                if (!line.classList.contains("located")) {
                     line.classList.add("just")
                 }
+                saveBtn.style.visibility="visible"
             }
 
             const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
             for (const b of controls) {
-                b.addEventListener("click",e=>{
+                b.addEventListener("click", e => {
                     const change = e.target.getAttribute("data-change")
-                    Array.from(allLines).filter(el=>!el.classList.contains("located")).forEach(l=>{l.classList[change]("selected");l.classList.remove("just")})
+                    Array.from(allLines).filter(el => !el.classList.contains("located")).forEach(l => { l.classList[change]("selected"); l.classList.remove("just") })
                 })
             }
             const locations = elem.querySelectorAll("a.gloss-location")
             for (const l of locations) {
-                l.addEventListener("click",e=>{
-                    const assignment= e.target.getAttribute("data-change")
+                l.addEventListener("click", e => {
+                    const assignment = e.target.getAttribute("data-change")
                     const selected = elem.querySelectorAll(".selected")
                     for (const s of selected) {
-                        s.classList.add("located", assignment.split(/\s/).reduce((response,word)=> response+=word.slice(0,1),''))
+                        s.classList.add("located", assignment.split(/\s/).reduce((response, word) => response += word.slice(0, 1), ''))
                         s.classList.remove("just", "selected")
                     }
                 })
             }
+            const classes = Object.keys(POSITIONS)
             const unassignmentButtons = elem.querySelectorAll("i.unassign")
             for (const r of unassignmentButtons) {
-                r.addEventListener("click",e=>{
+                r.addEventListener("click", e => {
                     e.preventDefault()
+                    e.stopPropagation()
                     const forLine = e.target.closest("line")
-                    if(forLine === null) { return false }
-                    const classes = Object.keys(POSITIONS) 
-                    const location = Array.from(forLine.classList).filter(val=>classes.includes(val))
+                    if (forLine === null) { return false }
+                    const location = Array.from(forLine.classList).filter(val => classes.includes(val))?.[0]
                     let thisLine = forLine
-                    while (thisLine) {
-                        if(!thisLine.classList.contains(location)) { break }
-
-                        thisLine.classList.remove(location)
-                        thisLine.classList.remove("located")
-                        thisLine.classList.remove("selected")
-                        thisLine.classList.remove("just")
-
+                    while (thisLine?.classList.contains(location)) {
+                        thisLine.classList.remove(location, "located", "selected", "just")
                         thisLine = thisLine.nextElementSibling
                     }
+                    saveBtn.style.visibility="visible"
                 })
             }
             const selected = elem.querySelectorAll(".selected")
             for (const s of selected) {
-                s.classList.add("located", assignment.split(/\s/).reduce((response,word)=> response+=word.slice(0,1),''))
+                s.classList.add("located", assignment.split(/\s/).reduce((response, word) => response += word.slice(0, 1), ''))
                 s.classList.remove("just", "selected")
             }
+            saveBtn.addEventListener("click", saveLocations)
+            function saveLocations() {
+                const locationMap = new Map()
+                allLines.forEach(line => {
+                    const location = Array.from(line.classList).filter(val => classes.includes(val))?.[0]
+                    locationMap.set(line.getAttribute("title"), location ?? false)
+                })
+
+                const locationAnnotationId = document.querySelector("div.page").getAttribute("data-marginalia")
+                if(!locationAnnotationId) {
+                    throw new Error("URI for Annotation Location could not be found.")
+                }
+
+                /**
+                 * TODO: This is a dirty trick to make this save reliably. The annotation should be targeted to 
+                 * just the lines within the Canvas and this map should be iterated through instead.
+                 */
+                const locationAnnotation = {
+                    "@id": locationAnnotationId,
+                    "@type": "Annotation",
+                    "@context": "http://www.w3.org/ns/anno.jsonld",
+                    target: c['@id'],
+                    body: { locations: Object.fromEntries(locationMap.entries()) },
+                    motivation: "classifying"
+                }
+                fetch(DEER.URLS.OVERWRITE, {
+                    method: 'PUT',
+                    mode: 'cors',
+                    body: JSON.stringify(locationAnnotation)
+                }).then(res => {
+                    if (!res.ok) {
+                        throw Error(res.statusText)
+                    }
+                    const ev = new CustomEvent("Locations Update")
+                    globalFeedbackBlip(ev, `Locations updated successfully.`, true)
+                    saveBtn.style.visibility="hidden"
+                    return res.json()
+                }).catch(err => {
+                    const ev = new CustomEvent("Locations Update")
+                    globalFeedbackBlip(ev, `Locations update failed.`, false)
+                })
+            }
+            function globalFeedbackBlip(event, message, success) {
+                globalFeedback.innerText = message
+                globalFeedback.classList.add("show")
+                if (success) {
+                    globalFeedback.classList.add("bg-success")
+                } else {
+                    globalFeedback.classList.add("bg-error")
+                }
+                setTimeout(function () {
+                    globalFeedback.classList.remove("show")
+                    globalFeedback.classList.remove("bg-error")
+                    // backup to page before the form
+                    UTILS.broadcast(event, "globalFeedbackFinished", globalFeedback, { message: message })
+                }, 3000)
+            }
+            function highlightLocations() {
+                const pageElement = document.querySelector("div.page")
+                const historyWildcard = { $exists: true, $type: 'array', $eq: [] }
+
+                const query = {
+                    target: c['@id'],
+                    motivation: "classifying",
+                    'body.locations': { $exists: true },
+                    '__rerum.history.next': historyWildcard
+                }
+
+                fetch(DEER.URLS.QUERY, {
+                    method: 'POST',
+                    mode: 'cors',
+                    body: JSON.stringify(query)
+                }).then(res => {
+                    if (!res.ok) {
+                        throw Error(res.statusText)
+                    }
+                    return res.json()
+                }).then(annotations => {
+                    if (annotations.length === 0) {
+                        // no results
+                        const locationAnnotation = {
+                            "@type": "Annotation",
+                            "@context": "http://www.w3.org/ns/anno.jsonld",
+                            target: c['@id'],
+                            body: { locations: {} },
+                            motivation: "classifying"
+                        }
+
+                        fetch(DEER.URLS.CREATE, {
+                            method: 'POST',
+                            mode: 'cors',
+                            headers: {
+                                'Content-Type': 'application/ld+json'
+                            },
+                            body: JSON.stringify(locationAnnotation)
+                        }).then(res => {
+                            if (!res.ok) {
+                                throw Error(res.statusText)
+                            }
+                            return res.json()
+                        }).then(loc => {
+                            const ev = new CustomEvent("Marginalia locations loaded")
+                            globalFeedbackBlip(ev, `Marginalia locations loaded`, true)
+                            pageElement.setAttribute("data-marginalia", loc.new_obj_state['@id'])
+                        })
+                            .catch(err => console.error(err))
+
+                    } else {
+                        drawAssignment(annotations[0].body.locations)
+                        pageElement.setAttribute("data-marginalia", annotations[0]['@id'])
+                    }
+                })
+                    .catch(err => {
+                        const ev = new CustomEvent("Location annotation query")
+                        globalFeedbackBlip(ev, `Please reload. This crashed. ${err}`, false)
+                    })
+
+                function drawAssignment(glossLines) {
+                    for (const line in glossLines) {
+                        const el = document.querySelector(`line[title="${line}"]`)
+                        if (!el) { continue }
+                        const locatedClass = glossLines[line] ? `located ${glossLines[line]}` : ""
+                        el.className = locatedClass
+                    }
+                }
+            }
+            highlightLocations()
         }
     }
 }
