@@ -194,7 +194,7 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
                 <div class="page">
                     <h3>${b.label}</h3> 
                     <a href="./layout.html#${ms['@id']}">(edit layout)</a>
-                    <a href="./select-TPEN-lines-for-gloss.html#${ms['@id']}">(edit included lines)</a>
+                    <a href="./select-TPEN-lines-for-Gloss.html#${ms['@id']}">(edit included lines)</a>
                     <div class="pull-right col-6">
                         <img src="${b.images[0].resource['@id']}">
                     </div>
@@ -223,7 +223,6 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 </script>
                 <a class="tag is-small" data-change="add">Select All</a>
                 <a class="tag is-small" data-change="remove">Deselect All</a>
-                <a class="tag is-small" data-change="toggle">Invert All</a>
             </div>
                 ${c.otherContent[0].resources.reduce((aa, bb, i) => aa += `
                 <line title="${bb['@id']}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="unassign tag is-small bg-light text-dark">⭯</i></line>
