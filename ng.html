@@ -147,6 +147,7 @@
         /**
          * Click event handler for #addTag.  Takes the user input and adds the string to the Set if it isn't already included.
          * Includes pagination.
+         * Note this could be part of a custom HTML tags widget or template or something.
          * */
         function addTag(event){
             event.preventDefault()
@@ -176,6 +177,7 @@
          * Helper function for the specialized tags area in the deer form.  This takes the Annotation
          * containing the Set, gets the value, and populates it to the hidden input for tags.
          * It also draws existing tags to the UI.
+         * Note this could be part of a custom HTML tags widget or template or something.
          * */
         function prefillTagsArea(tagData, form=document.getElementById("named-glosses")){
             if(tagData === undefined){
@@ -204,6 +206,7 @@
          * Click event handler for .removeTag when the user clicks the little x. 
          * Removes tag from the set of known tags (if included, it really should be though.)
          * Includes pagination.
+         * Note this could be part of a custom HTML tags widget or template or something.
          * */
         function removeTag(event, tagName){
             event.preventDefault()
