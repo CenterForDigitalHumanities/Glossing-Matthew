@@ -88,7 +88,7 @@
             manuscript.setAttribute("deer-id", msid)
             thumbroll.setAttribute("deer-id", msid)
             newGloss.setAttribute("href", "gloss.html?partOf=" + msid + "#")
-            fetch("http://tinymatt.rerum.io/gloss/query", {
+            fetch("http://tinydev.rerum.io/app/query", {
                 method: "POST",
                 body: JSON.stringify({
                     "body.partOf.value": msid
@@ -116,7 +116,7 @@
             event.preventDefault()
             if (confirm("Really remove this manuscript?\n(Cannot be undone)")) {
                 let collectorId = document.querySelector('[deer-key="targetCollection"]').getAttribute("deer-source")
-                fetch("http://tinymatt.rerum.io/gloss/delete", {
+                fetch("http://tinydev.rerum.io/app/delete", {
                     method: "DELETE",
                     body: collectorId
                 }).then(obj => {

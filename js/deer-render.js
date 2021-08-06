@@ -206,6 +206,29 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
     }
 }
 
+DEER.TEMPLATES.folioTranscriptionForGloss = function (obj, options = {}) {
+    return {
+        html: obj.tpenProject ? `<div class="is-full-width"> <h3> ... loading preview ... </h3> </div>` : ``,
+        then: (elem) => {
+            fetch("http://t-pen.org/TPEN/manifest/" + obj.tpenProject.value)
+                .then(response => response.json())
+                .then(ms => elem.innerHTML = `
+                ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `
+                <div class="page">
+                    <h3>${b.label}</h3> <a href="./select-TPEN-lines-for-gloss.html#${ms['@id']}">(edit layout)</a>
+                    <div class="pull-right col-6">
+                        <img src="${b.images[0].resource['@id']}">
+                    </div>
+                        ${b.otherContent[0].resources.reduce((aa, bb) => aa += `
+                        <span class="line" title="${bb["@id"]}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}</span>
+                        `, ``)}
+                </div>
+                `, ``)}
+        `)
+        }
+    }
+}
+
 DEER.TEMPLATES.osd = function(obj, options ={}) {
     const imgURL = obj.sequences[0].canvases[options.index || 0].images[0].resource['@id']
     return {
@@ -326,17 +349,11 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                     e.preventDefault()
                     const forLine = e.target.closest("line")
                     if(forLine === null) { return false }
-                    const classes = Object.keys(POSITIONS) 
-                    const location = Array.from(forLine.classList).filter(val=>classes.includes(val))
                     let thisLine = forLine
                     while (thisLine) {
                         if(!thisLine.classList.contains(location)) { break }
-
-                        thisLine.classList.remove(location)
-                        thisLine.classList.remove("located")
                         thisLine.classList.remove("selected")
                         thisLine.classList.remove("just")
-
                         thisLine = thisLine.nextElementSibling
                     }
                 })
@@ -344,6 +361,88 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
             const selected = elem.querySelectorAll(".selected")
             for (const s of selected) {
                 s.classList.add("located", assignment.split(/\s/).reduce((response,word)=> response+=word.slice(0,1),''))
+                s.classList.remove("just", "selected")
+            }
+        }
+    }
+}
+
+DEER.TEMPLATES.glossLines = function (obj, options = {}) {
+    let c = obj.sequences[0].canvases[options.index || 0]
+    return {
+        html: `
+        <div class="page">
+            <h3>${c.label}</h3>
+            <div class="col">
+                <script>
+                    function batchLine(change) {
+                        [...document.getElementsByTagName("line")].forEach(l=>{l.classList[change]("selected");l.classList.remove("just")})
+                    }
+                </script>
+                <a class="tag is-small" data-change="add">Select All</a>
+                <a class="tag is-small" data-change="remove">Deselect All</a>
+                <a class="tag is-small" data-change="toggle">Invert All</a>
+            </div>
+                ${c.otherContent[0].resources.reduce((aa, bb, i) => aa += `
+                <line title="${bb['@id']}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="unassign tag is-small bg-light text-dark">⭯</i></line>
+                `, ``)}
+        </div>
+        `,
+        then: elem => {
+            const allLines = elem.getElementsByTagName("line")
+            for (const l of allLines) { l.addEventListener("click", selectLine) }
+            function selectLine(event) {
+                const lastClick = document.querySelector("line.just")
+                const line = event.target.closest("line")
+
+                if (lastClick && event.shiftKey) {
+                    // band-select
+                    const change = lastClick.classList.contains("selected") // change is constant
+                        ? "add"
+                        : "remove"
+                    const lookNext = parseInt(lastClick.getAttribute("index")) < parseInt(line.getAttribute("index"))
+                        ? "nextElementSibling"
+                        : "previousElementSibling"
+                    let changeLine = lastClick
+                    do {
+                        changeLine = changeLine[lookNext]
+                            changeLine.classList[change]("selected")
+                    } while (changeLine !== line)
+                } else{
+                    line.classList.toggle("selected")
+                }
+
+                if (lastClick) { lastClick.classList.remove("just") }
+                
+                line.classList.add("just")
+                
+            }
+
+            const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
+            for (const b of controls) {
+                b.addEventListener("click",e=>{
+                    const change = e.target.getAttribute("data-change")
+                    Array.from(allLines).forEach(l=>{l.classList[change]("selected");l.classList.remove("just")})
+                })
+            }
+
+            // const unassignmentButtons = elem.querySelectorAll("i.unassign")
+            // for (const r of unassignmentButtons) {
+            //     r.addEventListener("click",e=>{
+            //         e.preventDefault()
+            //         const forLine = e.target.closest("line")
+            //         if(forLine === null) { return false }
+            //         let thisLine = forLine
+            //         while (thisLine) {
+            //             thisLine.classList.remove("selected")
+            //             thisLine.classList.remove("just")
+            //             thisLine = thisLine.nextElementSibling
+            //         }
+            //     })
+            // }
+
+            const selected = elem.querySelectorAll(".selected")
+            for (const s of selected) {
                 s.classList.remove("just", "selected")
             }
         }
