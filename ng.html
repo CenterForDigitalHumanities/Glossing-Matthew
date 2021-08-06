@@ -164,9 +164,9 @@
             let tracked_tags = document.querySelector("input[deer-key='tags']")
             tracked_tags.value = tracked_tags.value.toLowerCase()
             const delim = (tracked_tags.hasAttribute("deer-array-delimeter")) ? tracked_tags.getAttribute("deer-array-delimeter") : ","
-            const newTagName = tagInput.value.toLowerCase()
+            const newTagName = tagInput.value.toLowerCase().trim()
             let arr_tag_names = tracked_tags.value ? tracked_tags.value.split(delim) : []
-            if (arr_tag_names.indexOf(newTagName) === -1) {
+            if (newTagName && arr_tag_names.indexOf(newTagName) === -1) {
               selectedTagsArea.innerHTML = ""
               arr_tag_names.push(newTagName)
               arr_tag_names.forEach(name => {
@@ -197,7 +197,7 @@
             }
             let arr_names = (tagData.hasOwnProperty("value") && tagData.value.hasOwnProperty("items")) ? tagData.value.items : 
             tagData.hasOwnProperty("items") ? tagData.items : 
-            [annotationData[key]]
+            [tagData]
             if(arr_names.length === 0){
                 console.warn("There are no tags recorded for this named gloss")
                 return false
@@ -207,10 +207,13 @@
             //Now build the little tags
             let selectedTagsArea = document.getElementById("knownTags")
             selectedTagsArea.innerHTML = ""
-            arr_names.forEach(selection => {
-                let tag = `<span class="tag is-small">${selection}<span class="removeTag" onclick="removeTag(event, '${name}')"></span></span>` 
-                selectedTagsArea.innerHTML += tag
+            let tags = ""
+            arr_names.forEach(tagName => {
+                if(tagName){
+                    tags += `<span class="tag is-small">${tagName}<span class="removeTag" onclick="removeTag(event, '${tagName}')"></span></span>` 
+                }
             })
+            selectedTagsArea.innerHTML = tags
         }
 
         /**
