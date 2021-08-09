@@ -217,7 +217,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
     c.otherContent[0].resources.forEach(line => {
         let glossCount = 1
         if(line.contains("Pthing")){
-            glossOptions += `<option g="${glossCount}"> Gloss ${glossCount} </option>`
+            glossOptions += `<option value="${glossCount}"> Gloss ${glossCount} </option>`
             glossCount++
         }
     })
@@ -228,7 +228,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
             <h3>${c.label}</h3>
             <div class="row">
                 <select id="glossNum"> ${glossOptions} </select>
-                <a class="tag is-small" data-change="Assign Selected Lines To Gloss">Select All</a>
+                <a id="assignBtn" class="tag is-small">Assign Selected Lines To Gloss</a>
             </div>
             <div class="col">
                 <script>
@@ -275,14 +275,36 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 saveBtn.style.visibility="visible"
             }
 
-            const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
+        
+           /**
+            * Logic for select/deselect all
+            */  
+           const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
             for (const b of controls) {
-                b.addEventListener("click",e=>{
-                    const change = e.target.getAttribute("data-change")
-                    Array.from(allLines).forEach(l=>{l.classList[change]("selected");l.classList.remove("just")})
+                b.addEventListener("click", e => {
+                    const change = glossNum.value
+                    Array.from(allLines).filter(el => !el.classList.contains("located")).forEach(l => { l.classList[change]("selected"); l.classList.remove("just") })
                 })
             }
 
+            /**
+             * Logic for what happens when a user assigns the selected lines to a gloss.
+             */ 
+            const locations = elem.querySelectorAll("a.gloss-location")
+            for (const l of locations) {
+                l.addEventListener("click", e => {
+                    const assignment = e.target.getAttribute("data-change")
+                    const selected = elem.querySelectorAll(".selected")
+                    for (const s of selected) {
+                        s.classList.add("located", glossNum.value)
+                        s.classList.remove("just", "selected")
+                    }
+                })
+            }
+
+            /**
+             * Logic for a given lines unassign button
+             */ 
             const unassignmentButtons = elem.querySelectorAll("i.unassign")
             for (const r of unassignmentButtons) {
                 r.addEventListener("click",e=>{
@@ -298,13 +320,18 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 })
             }
 
+            for (const s of selected) {
+                s.classList.add("located", glossNum.value)
+                s.classList.remove("just", "selected")
+            }
+
             const selected = elem.querySelectorAll(".selected")
             for (const s of selected) {
                 s.classList.remove("just", "selected")
             }
 
             saveBtn.addEventListener("click", connectLinesWithNamedGloss)
-            
+
             function connectLinesWithNamedGloss() {
                 const tpen_line_ids = allLines.map(line => {
                     return line.getAttribute("title")
