@@ -216,7 +216,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
     let glossOptions = ``
     c.otherContent[0].resources.forEach(line => {
         let glossCount = 1
-        if(line.contains("Pthing")){
+        if(line.resource["cnt:chars"].indexOf("Pthing") > -1 ){
             glossOptions += `<option value="${glossCount}"> Gloss ${glossCount} </option>`
             glossCount++
         }
@@ -238,6 +238,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 </script>
                 <a class="tag is-small" data-change="add">Select All</a>
                 <a class="tag is-small" data-change="remove">Deselect All</a>
+                <a class="tag is-small" data-change="toggle">Invert All</a>
             </div>
             <div class="col">
                 <button id="saveBtn" role="button" style="visibility:hidden;">Save Changes</button>
@@ -290,17 +291,16 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
             /**
              * Logic for what happens when a user assigns the selected lines to a gloss.
              */ 
-            const locations = elem.querySelectorAll("a.gloss-location")
-            for (const l of locations) {
-                l.addEventListener("click", e => {
-                    const assignment = e.target.getAttribute("data-change")
-                    const selected = elem.querySelectorAll(".selected")
-                    for (const s of selected) {
-                        s.classList.add("located", glossNum.value)
-                        s.classList.remove("just", "selected")
-                    }
-                })
-            }
+            assignBtn.addEventListener("click", e => {
+                //const assignment = e.target.getAttribute("data-change")
+                const assignment = glossNum.value
+                const selected = elem.querySelectorAll(".selected")
+                for (const s of selected) {
+                    s.classList.add("located", assignment)
+                    s.classList.remove("just", "selected")
+                }
+            })
+            
 
             /**
              * Logic for a given lines unassign button
@@ -319,41 +319,53 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                     }
                 })
             }
-
+            const selected = elem.querySelectorAll(".selected")
             for (const s of selected) {
-                s.classList.add("located", glossNum.value)
+                s.classList.add("located", assignment)
                 s.classList.remove("just", "selected")
             }
-
-            const selected = elem.querySelectorAll(".selected")
             for (const s of selected) {
                 s.classList.remove("just", "selected")
             }
 
             saveBtn.addEventListener("click", connectLinesWithNamedGloss)
 
-            function connectLinesWithNamedGloss() {
-                const tpen_line_ids = allLines.map(line => {
-                    return line.getAttribute("title")
-                })
+            function connectLinesWithNamedGloss(){ 
+                //This is probably going to be the AnnotationPage now??
                 const linesAnnotationId = document.querySelector("div.page").getAttribute("data-marginalia")
                 if(!linesAnnotationId) {
                     throw new Error("URI for Annotation could not be found.")
                 }
+
+                // For each selected line, make an Annotation where the line or line segment is the target.
+                // The body is which gloss num on the page it belongs to?
+                let annoPageItems = allLines.filter(l => l.classList.contains("selected"))
+                .map(line => {
+                    return {
+                        "@id": linesAnnotationId,
+                        "@type": "Annotation",
+                        "@context": "http://www.w3.org/ns/anno.jsonld",
+                        target: c['@id'],
+                        body: {"_gloss_num": glossNum.value},
+                        motivation: "classifying"
+                    }
+                })
+
                 /**
                  * Create an Annotation Page for each page of the transcription (gloss).
                  * That page will contain the selected lines, each of which is an Annotation.
                  * The Annotation will target the line (or line fragment)
                  */
 
-                const linesAnnotation = {
-                    "@id": linesAnnotationId,
-                    "@type": "Annotation",
-                    "@context": "http://www.w3.org/ns/anno.jsonld",
-                    target: c['@id'],
-                    body: {"_tpen_lines": {"@type":"Set", "items":tpen_line_ids}},
-                    motivation: "classifying"
+                const annotationPage = {
+                  "@context": "http://www.w3.org/ns/anno.jsonld",
+                  "type": "AnnotationPage",
+                  "partOf": "T-PEN Manifest/Canvas/",
+                  "startIndex": 0,
+                  "items": annoPageItems,
+                  "next": "http://example.org/page2"
                 }
+            
                 /*
                 fetch(DEER.URLS.OVERWRITE, {
                     method: 'PUT',
@@ -373,26 +385,90 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 })
                 */
             }
+            function globalFeedbackBlip(event, message, success) {
+                globalFeedback.innerText = message
+                globalFeedback.classList.add("show")
+                if (success) {
+                    globalFeedback.classList.add("bg-success")
+                } else {
+                    globalFeedback.classList.add("bg-error")
+                }
+                setTimeout(function () {
+                    globalFeedback.classList.remove("show")
+                    globalFeedback.classList.remove("bg-error")
+                    // backup to page before the form
+                    UTILS.broadcast(event, "globalFeedbackFinished", globalFeedback, { message: message })
+                }, 3000)
+            }
+            function renderGlossDesignations() {
+                const pageElement = document.querySelector("div.page")
+                const historyWildcard = { $exists: true, $type: 'array', $eq: [] }
+                const query = {
+                    target: c['@id'],
+                    motivation: "classifying",
+                    'body.locations': { $exists: true },
+                    '__rerum.history.next': historyWildcard
+                }
 
-DEER.TEMPLATES.folioTranscriptionForGloss = function (obj, options = {}) {
-    return {
-        html: obj.tpenProject ? `<div class="is-full-width"> <h3> ... loading preview ... </h3> </div>` : ``,
-        then: (elem) => {
-            fetch("http://t-pen.org/TPEN/manifest/" + obj.tpenProject.value)
-                .then(response => response.json())
-                .then(ms => elem.innerHTML = `
-                ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `
-                <div class="page">
-                    <h3>${b.label}</h3> <a href="./select-TPEN-lines-for-gloss.html#${ms['@id']}">(edit layout)</a>
-                    <div class="pull-right col-6">
-                        <img src="${b.images[0].resource['@id']}">
-                    </div>
-                        ${b.otherContent[0].resources.reduce((aa, bb) => aa += `
-                        <span class="line" title="${bb["@id"]}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}</span>
-                        `, ``)}
-                </div>
-                `, ``)}
-        `)
+                fetch(DEER.URLS.QUERY, {
+                    method: 'POST',
+                    mode: 'cors',
+                    body: JSON.stringify(query)
+                }).then(res => {
+                    if (!res.ok) {
+                        throw Error(res.statusText)
+                    }
+                    return res.json()
+                }).then(annotations => {
+                    if (annotations.length === 0) {
+                        // no results
+                        const locationAnnotation = {
+                            "@type": "Annotation",
+                            "@context": "http://www.w3.org/ns/anno.jsonld",
+                            target: c['@id'],
+                            body: { locations: {} },
+                            motivation: "classifying"
+                        }
+
+                        fetch(DEER.URLS.CREATE, {
+                            method: 'POST',
+                            mode: 'cors',
+                            headers: {
+                                'Content-Type': 'application/ld+json'
+                            },
+                            body: JSON.stringify(locationAnnotation)
+                        }).then(res => {
+                            if (!res.ok) {
+                                throw Error(res.statusText)
+                            }
+                            return res.json()
+                        }).then(loc => {
+                            const ev = new CustomEvent("Marginalia locations loaded")
+                            globalFeedbackBlip(ev, `Marginalia locations loaded`, true)
+                            pageElement.setAttribute("data-marginalia", loc.new_obj_state['@id'])
+                        })
+                            .catch(err => console.error(err))
+
+                    } else {
+                        drawAssignment(annotations[0].body.locations)
+                        pageElement.setAttribute("data-marginalia", annotations[0]['@id'])
+                    }
+                })
+                    .catch(err => {
+                        const ev = new CustomEvent("Location annotation query")
+                        globalFeedbackBlip(ev, `Please reload. This crashed. ${err}`, false)
+                    })
+
+                function drawAssignment(glossLines) {
+                    for (const line in glossLines) {
+                        const el = document.querySelector(`line[title="${line}"]`)
+                        if (!el) { continue }
+                        const locatedClass = glossLines[line] ? `located ${glossLines[line]}` : ""
+                        el.className = locatedClass
+                    }
+                }
+            }
+            //renderGlossDesignations()
         }
     }
 }
