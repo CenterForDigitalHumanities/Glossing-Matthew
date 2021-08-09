@@ -762,14 +762,14 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                             target: id,
                             "__rerum.history.next": historyWildcard
                         }
-                        fetch("http://tinymatt.rerum.io/gloss/query", {
+                        fetch("http://tinydev.rerum.io/app/query", {
                             method: "POST",
                             body: JSON.stringify(queryObj)
                         })
                         .then(r => r.ok ? r.json() : Promise.reject(new Error(r?.text)))
                         .then(annos => {
                             let all = annos.map(anno => {
-                                return fetch("http://tinymatt.rerum.io/gloss/delete", {
+                                return fetch("http://tinydev.rerum.io/app/delete", {
                                     method: "DELETE",
                                     body: anno["@id"]
                                 })

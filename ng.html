@@ -139,7 +139,7 @@
             event.preventDefault()
             if (confirm("Really remove this named gloss?\n(Cannot be undone)")) {
                 let collectorId = document.querySelector('[deer-key="targetCollection"]').getAttribute("deer-source")
-                fetch("http://tinymatt.rerum.io/gloss/delete", {
+                fetch("http://tinydev.rerum.io/app/delete", {
                     method: "DELETE",
                     body: collectorId
                 }).then(obj => {
