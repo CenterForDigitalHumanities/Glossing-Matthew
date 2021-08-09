@@ -227,7 +227,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
         <div class="page">
             <h3>${c.label}</h3>
             <div class="row">
-                <select id="glossNum"> ${glossOptions} </select>
+                <select id="glossNumDropdown"> ${glossOptions} </select>
                 <a id="assignBtn" class="tag is-small">Assign Selected Lines To Gloss</a>
             </div>
             <div class="col">
@@ -283,7 +283,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
            const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
             for (const b of controls) {
                 b.addEventListener("click", e => {
-                    const change = glossNum.value
+                    const change = glossNumDropdown.value
                     Array.from(allLines).filter(el => !el.classList.contains("located")).forEach(l => { l.classList[change]("selected"); l.classList.remove("just") })
                 })
             }
@@ -293,7 +293,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
              */ 
             assignBtn.addEventListener("click", e => {
                 //const assignment = e.target.getAttribute("data-change")
-                const assignment = glossNum.value
+                const assignment = glossNumDropdown.value
                 const selected = elem.querySelectorAll(".selected")
                 for (const s of selected) {
                     s.classList.add("located", assignment)
@@ -346,7 +346,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                         "@type": "Annotation",
                         "@context": "http://www.w3.org/ns/anno.jsonld",
                         target: c['@id'],
-                        body: {"_gloss_num": glossNum.value},
+                        body: {"_gloss_num": glossNumDropdown.value},
                         motivation: "classifying"
                     }
                 })
