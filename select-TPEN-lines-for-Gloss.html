@@ -15,13 +15,13 @@
             <a href="./ms.html" id="thisMS" class="is-hidden">📖 This Manuscript</a>
         </div>
     </gm-header>
-    <h3 id="glossTitle" class="deer-view send-id" deer-id="" deer-template="label">Layout Editor</h3>
+    <h3 id="glossTitle" class="deer-view send-id" deer-template="label">Gloss Alignment</h3>
 
     <deer-view deer-id="" class="send-id" deer-template="pageLinks"></deer-view>
     
     <div class="row">
+        <deer-view id="glossNumBtns" deer-collection="Glossing-Matthew-Named-Glosses" deer-template="glossAssignments"></deer-view>
         <deer-view id="folioLayout" deer-id="" class="send-id col-6" deer-target-collection="Glossing-Matthew-Named-Glosses" deer-template="glossLines"></deer-view>
-        <deer-view class="col-6 send-id" deer-id="" id="zoomy" deer-template="osd"></deer-view>
     </div>
 
     <deer-view id="previewTranscription" deer-template="folioTranscription"></deer-view>

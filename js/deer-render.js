@@ -208,6 +208,19 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
     }
 }
 
+DEER.TEMPLATES.glossAssignments = function(obj,options={}) {
+    return {
+        html: `Loading Glosses&hellip;`,
+        then: elem => {
+            UTILS.listFromCollection(options.collection)
+    .then(glosses=>{
+        elem.innerHTML = glosses.reduce((a,b,i)=>a+=`<button role="button" class="deer-view" deer-id="${b['@id']}" deer-template="label">${b['@id'] ?? i+1}</button>`,``)
+        elem.querySelectorAll('button.deer-view').forEach(el=>new DeerRender(el))
+    })
+}
+    }
+}
+
 DEER.TEMPLATES.glossLines = function (obj, options = {}) {
     //TODO we need to know the GlossID here as well.
     let c = obj.sequences[0].canvases[options.index ?? 0]
@@ -216,8 +229,6 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
         html: `
         <div class="page">
             <h3>${c.label}</h3>
-            <div class="row" id="glossNumBtns">
-            </div>
             <div class="col">
                 <script>
                     function batchLine(change) {
@@ -237,12 +248,6 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
         </div>
         `,
         then: elem => {
-            UTILS.listFromCollection("Glossing-Matthew-Named-Glosses")
-            .then(glosses=>{
-                glossNumBtns.innerHTML = glosses.reduce((a,b,i)=>a+=`<button role="button" class="deer-view" deer-id="${b['@id']}" deer-template="label">${b['@id'] ?? i+1}</button>`,``)
-                glossNumBtns.querySelectorAll("button.deer-view").forEach(el=>new DeerRender(el))
-            })
-
             const allLines = elem.getElementsByTagName("line")
             for (const l of allLines) { l.addEventListener("click", selectLine) }
 
