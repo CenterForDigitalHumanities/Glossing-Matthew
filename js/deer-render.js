@@ -360,7 +360,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 const annotationPage = {
                   "@context": "http://www.w3.org/ns/anno.jsonld",
                   "type": "AnnotationPage",
-                  "partOf": "T-PEN Manifest/Canvas/",
+                  "partOf": window.location.hash.substr(1),
                   "startIndex": 0,
                   "items": annoPageItems,
                   "next": "http://example.org/page2"
