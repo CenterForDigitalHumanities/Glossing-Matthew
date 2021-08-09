@@ -210,25 +210,13 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
 
 DEER.TEMPLATES.glossLines = function (obj, options = {}) {
     //TODO we need to know the GlossID here as well.
-    let c = obj.sequences[0].canvases[options.index || 0]
-    //Need to offer gloss assigning via dropdown.  Count the New Paragraph characters to have a number, and offer the selection.
-
-    let glossOptions = ``
-    c.otherContent[0].resources.forEach(line => {
-        let glossCount = 1
-        if(line.resource["cnt:chars"].indexOf("Pthing") > -1 ){
-            glossOptions += `<option value="${glossCount}"> Gloss ${glossCount} </option>`
-            glossCount++
-        }
-    })
+    let c = obj.sequences[0].canvases[options.index ?? 0]
 
     return {
         html: `
         <div class="page">
             <h3>${c.label}</h3>
-            <div class="row">
-                <select id="glossNumDropdown"> ${glossOptions} </select>
-                <a id="assignBtn" class="tag is-small">Assign Selected Lines To Gloss</a>
+            <div class="row" id="glossNumBtns">
             </div>
             <div class="col">
                 <script>
@@ -244,11 +232,17 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 <button id="saveBtn" role="button" style="visibility:hidden;">Save Changes</button>
             </div>
                 ${c.otherContent[0].resources.reduce((aa, bb, i) => aa += `
-                <line title="${bb['@id']}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="unassign tag is-small bg-light text-dark">⭯</i></line>
+                <line title="${bb['@id']}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}</line>
                 `, ``)}
         </div>
         `,
         then: elem => {
+            UTILS.listFromCollection("Glossing-Matthew-Named-Glosses")
+            .then(glosses=>{
+                glossNumBtns.innerHTML = glosses.reduce((a,b,i)=>a+=`<button role="button" class="deer-view" deer-id="${b['@id']}" deer-template="label">${b['@id'] ?? i+1}</button>`,``)
+                glossNumBtns.querySelectorAll("button.deer-view").forEach(el=>new DeerRender(el))
+            })
+
             const allLines = elem.getElementsByTagName("line")
             for (const l of allLines) { l.addEventListener("click", selectLine) }
 
@@ -288,37 +282,6 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 })
             }
 
-            /**
-             * Logic for what happens when a user assigns the selected lines to a gloss.
-             */ 
-            assignBtn.addEventListener("click", e => {
-                //const assignment = e.target.getAttribute("data-change")
-                const assignment = glossNumDropdown.value
-                const selected = elem.querySelectorAll(".selected")
-                for (const s of selected) {
-                    s.classList.add("located", assignment)
-                    s.classList.remove("just", "selected")
-                }
-            })
-            
-
-            /**
-             * Logic for a given lines unassign button
-             */ 
-            const unassignmentButtons = elem.querySelectorAll("i.unassign")
-            for (const r of unassignmentButtons) {
-                r.addEventListener("click",e=>{
-                    e.preventDefault()
-                    const forLine = e.target.closest("line")
-                    if(forLine === null) { return false }
-                    let thisLine = forLine
-                    while (thisLine) {
-                        thisLine.classList.remove("selected")
-                        thisLine.classList.remove("just")
-                        thisLine = thisLine.nextElementSibling
-                    }
-                })
-            }
             const selected = elem.querySelectorAll(".selected")
             for (const s of selected) {
                 s.classList.add("located", assignment)
@@ -474,7 +437,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
 }
 
 DEER.TEMPLATES.osd = function (obj, options = {}) {
-    const imgURL = obj.sequences[0].canvases[options.index || 0].images[0].resource['@id']
+    const imgURL = obj.sequences[0].canvases[options.index ?? 0].images[0].resource['@id']
     return {
         html: ``,
         then: elem => {
@@ -492,7 +455,7 @@ DEER.TEMPLATES.osd = function (obj, options = {}) {
 }
 
 DEER.TEMPLATES.lines = function (obj, options = {}) {
-    let c = obj.sequences[0].canvases[options.index || 0]
+    let c = obj.sequences[0].canvases[options.index ?? 0]
     return {
         html: `
         <div class="page">
