@@ -70,7 +70,22 @@ export default {
                 tmpl += `</ul>`
             }
             return tmpl
-        }
+        },
+        ngList: function (obj, options = {}) {
+            let tmpl = `<h2>Named Glosses</h2>`
+            if (options.list) {
+                tmpl += `<ul>`
+                obj[options.list].forEach((val, index) => {
+                    tmpl += `<li>
+                    <a href="${options.link}${val['@id']}">
+                    <deer-view deer-id="${val["@id"]}" deer-template="label">${index+1}</deer-view>
+                    </a>
+                    </li>`
+                })
+                tmpl += `</ul>`
+            }
+            return tmpl
+        },
     },
     version: "alpha"
 }

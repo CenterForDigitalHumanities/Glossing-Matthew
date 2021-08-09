@@ -373,11 +373,31 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 })
                 */
             }
+
+DEER.TEMPLATES.folioTranscriptionForGloss = function (obj, options = {}) {
+    return {
+        html: obj.tpenProject ? `<div class="is-full-width"> <h3> ... loading preview ... </h3> </div>` : ``,
+        then: (elem) => {
+            fetch("http://t-pen.org/TPEN/manifest/" + obj.tpenProject.value)
+                .then(response => response.json())
+                .then(ms => elem.innerHTML = `
+                ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `
+                <div class="page">
+                    <h3>${b.label}</h3> <a href="./select-TPEN-lines-for-gloss.html#${ms['@id']}">(edit layout)</a>
+                    <div class="pull-right col-6">
+                        <img src="${b.images[0].resource['@id']}">
+                    </div>
+                        ${b.otherContent[0].resources.reduce((aa, bb) => aa += `
+                        <span class="line" title="${bb["@id"]}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}</span>
+                        `, ``)}
+                </div>
+                `, ``)}
+        `)
         }
     }
 }
 
-DEER.TEMPLATES.osd = function(obj, options ={}) {
+DEER.TEMPLATES.osd = function (obj, options = {}) {
     const imgURL = obj.sequences[0].canvases[options.index || 0].images[0].resource['@id']
     return {
         html: ``,
@@ -648,6 +668,131 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
     }
 }
 
+DEER.TEMPLATES.managedlist = function (obj, options = {}) {
+    try {
+        let tmpl = `<input type="hidden" deer-collection="${options.collection}">`
+        if (options.list) {
+            tmpl += `<ul>`
+            obj[options.list].forEach((val, index) => {
+                const removeBtn = `<a href="${val['@id']}" class="removeCollectionItem" title="Delete This Entry">&#x274C</a>`
+                const visibilityBtn = `<a class="togglePublic" href="${val['@id']}" title="Toggle public visibility"> 👁 </a>`
+                tmpl += `<li>
+                ${visibilityBtn}
+                <a href="${options.link}${val['@id']}">
+                [ <deer-view deer-id="${val["@id"]}" deer-template="prop" deer-key="alternative"></deer-view> ] <deer-view deer-id="${val["@id"]}" deer-template="label">${index + 1}</deer-view>
+                </a>
+                ${removeBtn}
+                </li>`
+            })
+            tmpl += `</ul>`
+        }
+        else {
+            console.log("There are no items in this list to draw.")
+            console.log(obj)
+        }
+        return {
+            html: tmpl,
+            then: elem => {
+
+                fetch(elem.getAttribute("deer-listing")).then(r => r.json())
+                    .then(list => {
+                        elem.manuscripts = new Set()
+                        list.itemListElement.forEach(item=>elem.manuscripts.add(item['@id']))
+                        for (const a of document.querySelectorAll('.togglePublic')) {
+                            const include = elem.manuscripts.has(a.getAttribute("href")) ? "add" : "remove"
+                            a.classList[include]("is-included")
+                        }
+                    })
+                    .then(()=>{
+                        document.querySelectorAll(".removeCollectionItem").forEach(el => el.addEventListener('click', (ev) => {
+                            ev.preventDefault()
+                            ev.stopPropagation()
+                            const itemID = el.getAttribute("href")
+                            const fromCollection = document.querySelector('input[deer-collection]').getAttribute("deer-collection")
+                            deleteThis(itemID, fromCollection)
+                        }))
+                        document.querySelectorAll('.togglePublic').forEach(a => a.addEventListener('click', ev => {
+                            ev.preventDefault()
+                            ev.stopPropagation()
+                            const uri = a.getAttribute("href")
+                            const included = elem.manuscripts.has(uri)
+                            a.classList[included ? "remove" : "add"]("is-included")
+                            elem.manuscripts[included ? "delete" : "add"](uri)
+                            saveList.style.visibility = "visible"
+                        }))
+                        saveList.addEventListener('click', overwriteList)
+                    })
+
+
+                function overwriteList() {
+                    let mss = []
+                    elem.manuscripts.forEach(uri => {
+                        mss.push({
+                            label: document.querySelector(`deer-view[deer-id='${uri}']`).textContent.trim(),
+                            '@id': uri
+                        })
+                    })
+
+                    const list = {
+                        '@id': elem.getAttribute("deer-listing"),
+                        '@context': 'https://schema.org/',
+                        '@type': "ItemList",
+                        name: "Glossing Matthew Manuscripts",
+                        numberOfItems: elem.manuscripts.size,
+                        itemListElement: mss
+                    }
+
+                    fetch(DEER.URLS.OVERWRITE, {
+                        method: "PUT",
+                        mode: 'cors',
+                        body: JSON.stringify(list)
+                    }).then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
+                        .catch(err => alert(`Failed to save: ${err}`))
+                }
+
+                function deleteThis(id, collection) {
+                    if (confirm("Really remove this record?\n(Cannot be undone)")) {
+                        const historyWildcard = { "$exists": true, "$eq": [] }
+                        const queryObj = {
+                            $or: [{
+                                "targetCollection": collection
+                            }, {
+                                "body.targetCollection": collection
+                            }],
+                            target: id,
+                            "__rerum.history.next": historyWildcard
+                        }
+                        fetch("http://tinymatt.rerum.io/gloss/query", {
+                            method: "POST",
+                            body: JSON.stringify(queryObj)
+                        })
+                        .then(r => r.ok ? r.json() : Promise.reject(new Error(r?.text)))
+                        .then(annos => {
+                            let all = annos.map(anno => {
+                                return fetch("http://tinymatt.rerum.io/gloss/delete", {
+                                    method: "DELETE",
+                                    body: anno["@id"]
+                                })
+                                    .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
+                                    .catch(err => { throw err })
+                            })
+                            Promise.all(all).then(success => {
+                                document.querySelector(`[deer-id="${id}"]`).closest("li").remove()
+                            })
+                        })
+                        .catch(err => console.error(`Failed to delete: ${err}`))
+                    }
+                }
+
+            }
+        }
+    } catch (err) {
+        console.log("Could not build list template.")
+        console.error(err)
+        return null
+    }
+}
+
 /**
  * The TEMPLATED renderer to draw an JSON to the screen as some HTML template
  * @param {Object} obj some json of type Entity to be drawn
@@ -730,7 +875,6 @@ DEER.TEMPLATES.person = function (obj, options = {}) {
     } catch (err) {
         return null
     }
-    return null
 }
 
 /**
@@ -766,32 +910,32 @@ DEER.TEMPLATES.pageRanges = function (obj, options = {}) {
  * @param {Object} obj some json of type Person to be drawn
  * @param {Object} options additional properties to draw with the Person
  */
-DEER.TEMPLATES.canvasDropdown = function (obj, options = {}) {
-    return null
-    try {
-        let tmpl = `<form deer-type="Range" deer-context="http://iiif.io/api/image/3/context.json">
-        <input type="hidden" deer-key="isPartOf" value="${obj['@id']}">
-        <input type="hidden" deer-key="motivation" value="supplementing">
+// DEER.TEMPLATES.canvasDropdown = function (obj, options = {}) {
+//     return null
+//     try {
+//         let tmpl = `<form deer-type="Range" deer-context="http://iiif.io/api/image/3/context.json">
+//         <input type="hidden" deer-key="isPartOf" value="${obj['@id']}">
+//         <input type="hidden" deer-key="motivation" value="supplementing">
 
-startFolio
-endFolio
-Disposition
-Illuminated Initials
-Gloss ID
-General Target
-Specific Target
-Gloss Type
-Gloss Location
+// startFolio
+// endFolio
+// Disposition
+// Illuminated Initials
+// Gloss ID
+// General Target
+// Specific Target
+// Gloss Type
+// Gloss Location
 
-        <input type="submit">
-        </form>`
+//         <input type="submit">
+//         </form>`
 
-        return tmpl
-    } catch (err) {
-        return null
-    }
-    return null
-}
+//         return tmpl
+//     } catch (err) {
+//         return null
+//     }
+//     return null
+// }
 
 
 /**
@@ -806,7 +950,6 @@ DEER.TEMPLATES.event = function (obj, options = {}) {
     } catch (err) {
         return null
     }
-    return null
 }
 
 export default class DeerRender {

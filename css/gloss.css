@@ -171,6 +171,19 @@ line.selected.just {
   background-color: #cc0;
 }
 
+.is-included {
+  position: relative;
+}
+.is-included::after {
+  content: '✓';
+  top: -0.4em;
+  left: 0;
+  position: absolute;
+  color: blue;
+  font-size: 1.4em;
+  font-weight: 900;
+}
+
 #zoomy {
   position        : fixed;
   right           : 0;
