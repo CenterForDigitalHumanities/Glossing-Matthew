@@ -211,10 +211,25 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
 DEER.TEMPLATES.glossLines = function (obj, options = {}) {
     //TODO we need to know the GlossID here as well.
     let c = obj.sequences[0].canvases[options.index || 0]
+    //Need to offer gloss assigning via dropdown.  Count the New Paragraph characters to have a number, and offer the selection.
+
+    let glossOptions = ``
+    c.otherContent[0].resources.forEach(line => {
+        let glossCount = 1
+        if(line.contains("Pthing")){
+            glossOptions += `<option g="${glossCount}"> Gloss ${glossCount} </option>`
+            glossCount++
+        }
+    })
+
     return {
         html: `
         <div class="page">
             <h3>${c.label}</h3>
+            <div class="row">
+                <select id="glossNum"> ${glossOptions} </select>
+                <a class="tag is-small" data-change="Assign Selected Lines To Gloss">Select All</a>
+            </div>
             <div class="col">
                 <script>
                     function batchLine(change) {
@@ -287,6 +302,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
             for (const s of selected) {
                 s.classList.remove("just", "selected")
             }
+
             saveBtn.addEventListener("click", connectLinesWithNamedGloss)
             
             function connectLinesWithNamedGloss() {
@@ -297,11 +313,12 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 if(!linesAnnotationId) {
                     throw new Error("URI for Annotation could not be found.")
                 }
-
                 /**
-                 * TODO: This is a dirty trick to make this save reliably. The annotation should be targeted to 
-                 * just the lines within the Canvas and this map should be iterated through instead.
+                 * Create an Annotation Page for each page of the transcription (gloss).
+                 * That page will contain the selected lines, each of which is an Annotation.
+                 * The Annotation will target the line (or line fragment)
                  */
+
                 const linesAnnotation = {
                     "@id": linesAnnotationId,
                     "@type": "Annotation",
