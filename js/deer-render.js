@@ -214,10 +214,47 @@ DEER.TEMPLATES.glossAssignments = function(obj,options={}) {
         then: elem => {
             UTILS.listFromCollection(options.collection)
     .then(glosses=>{
-        elem.innerHTML = glosses.reduce((a,b,i)=>a+=`<button role="button" class="deer-view" deer-id="${b['@id']}" deer-template="label">${b['@id'] ?? i+1}</button>`,``)
-        elem.querySelectorAll('button.deer-view').forEach(el=>new DeerRender(el))
+        elem.innerHTML = glosses.reduce((a,b,i)=>a+=`<button role="button" 
+            class="deer-view glossBtn" 
+            deer-id="${b['@id']}" 
+            deer-template="label"
+            >${b['@id'] ?? i+1}</button>`,``)
+        elem.querySelectorAll('button.deer-view').forEach(el=>{
+            new DeerRender(el)
+            el.addEventListener('click',ev=> {
+
+                document.querySelectorAll('line.selected').forEach(line=>{
+                    const badge = line.querySelector('.gloss-badge')
+                    if(badge.getAttribute('data-badge-uri')) {
+                        const nextbadge = badge.cloneNode()
+                        nextbadge.innerHTML = el.innerHTML
+                        nextbadge.setAttribute('data-badge-uri',el.getAttribute('deer-id'))
+                        addClicker(nextbadge)
+                        badge.after(nextbadge)
+                    } else {
+                        badge.innerHTML = el.innerHTML
+                        badge.setAttribute('data-badge-uri',el.getAttribute('deer-id'))
+                        addClicker(badge)
+                    }
+                    line.classList.remove('selected','just')
+                })
+                saveBtn.style.visibility="visible"
+            })
+        })
     })
 }
+    }
+
+    function addClicker(elem){
+        elem.addEventListener('click',ev=>{
+            ev.stopPropagation()
+            if(elem.parentElement.querySelectorAll('.gloss-badge').length > 1) {
+                elem.remove()
+                return
+            }
+            elem.removeAttribute('data-badge-uri')
+            elem.innerHTML = ''
+        })
     }
 }
 
@@ -243,7 +280,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 <button id="saveBtn" role="button" style="visibility:hidden;">Save Changes</button>
             </div>
                 ${c.otherContent[0].resources.reduce((aa, bb, i) => aa += `
-                <line title="${bb['@id']}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}</line>
+                <line title="${bb['@id']}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="gloss-badge tag is-small bd-dark bg-light text-dark"></i></line>
                 `, ``)}
         </div>
         `,
@@ -272,7 +309,6 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 }
                 if (lastClick) { lastClick.classList.remove("just") }
                 line.classList.add("just")
-                saveBtn.style.visibility="visible"
             }
 
         
