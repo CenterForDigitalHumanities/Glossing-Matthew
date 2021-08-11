@@ -208,50 +208,55 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
     }
 }
 
-DEER.TEMPLATES.glossAssignments = function(obj,options={}) {
+DEER.TEMPLATES.glossAssignments = function (obj, options = {}) {
     return {
         html: `Loading Glosses&hellip;`,
         then: elem => {
             UTILS.listFromCollection(options.collection)
-    .then(glosses=>{
-        elem.innerHTML = glosses.reduce((a,b,i)=>a+=`<button role="button" 
+                .then(glosses => {
+                    elem.innerHTML = glosses.reduce((a, b, i) => a += `<button role="button" 
             class="deer-view glossBtn" 
             deer-id="${b['@id']}" 
             deer-template="label"
-            >${b['@id'] ?? i+1}</button>`,``)
-        elem.querySelectorAll('button.deer-view').forEach(el=>{
-            new DeerRender(el)
-            el.addEventListener('click',ev=> {
+            >${b['@id'] ?? i + 1}</button>`, ``)
+                    elem.querySelectorAll('.glossBtn').forEach(el => {
+                        new DeerRender(el)
+                        el.addEventListener('click', ev => {
 
-                document.querySelectorAll('line.selected').forEach(line=>{
-                    const badge = line.querySelector('.gloss-badge')
-                    if(badge.getAttribute('data-badge-uri')) {
-                        const nextbadge = badge.cloneNode()
-                        nextbadge.innerHTML = el.innerHTML
-                        nextbadge.setAttribute('data-badge-uri',el.getAttribute('deer-id'))
-                        addClicker(nextbadge)
-                        badge.after(nextbadge)
-                    } else {
-                        badge.innerHTML = el.innerHTML
-                        badge.setAttribute('data-badge-uri',el.getAttribute('deer-id'))
-                        addClicker(badge)
-                    }
-                    line.classList.remove('selected','just')
+                            document.querySelectorAll('line.selected').forEach(line => {
+                                el.glossAssignments.add(line.getAttribute('title'))
+                                const badge = line.querySelector('.gloss-badge')
+                                if (badge.getAttribute('data-badge-uri')) {
+                                    const nextbadge = badge.cloneNode()
+                                    nextbadge.innerHTML = el.innerHTML
+                                    nextbadge.setAttribute('data-badge-uri', el.getAttribute('deer-id'))
+                                    AttachClickToRemoveHandler(nextbadge)
+                                    badge.after(nextbadge)
+                                } else {
+                                    badge.innerHTML = el.innerHTML
+                                    badge.setAttribute('data-badge-uri', el.getAttribute('deer-id'))
+                                    AttachClickToRemoveHandler(badge)
+                                }
+                                line.classList.remove('selected', 'just')
+                            })
+                            saveBtn.style.visibility = "visible"
+
+                        })
+
+                        el.glossAssignments = new Set()
+                    })
                 })
-                saveBtn.style.visibility="visible"
-            })
-        })
-    })
-}
+        }
     }
 
-    function addClicker(elem){
-        elem.addEventListener('click',ev=>{
+    function AttachClickToRemoveHandler(elem) {
+        elem.addEventListener('click', ev => {
             ev.stopPropagation()
-            if(elem.parentElement.querySelectorAll('.gloss-badge').length > 1) {
+            if (elem.parentElement.querySelectorAll('.gloss-badge').length > 1) {
                 elem.remove()
                 return
             }
+            document.querySelector(`.glossBtn[deer-id='${elem.getAttribute('data-badge-uri')}']`)?.glossAssignments.remove(elem.closest('line').getAttribute('title'))
             elem.removeAttribute('data-badge-uri')
             elem.innerHTML = ''
         })
@@ -302,20 +307,20 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                     let changeLine = lastClick
                     do {
                         changeLine = changeLine[lookNext]
-                            changeLine.classList[change]("selected")
+                        changeLine.classList[change]("selected")
                     } while (changeLine !== line)
-                } else{
+                } else {
                     line.classList.toggle("selected")
                 }
                 if (lastClick) { lastClick.classList.remove("just") }
                 line.classList.add("just")
             }
 
-        
-           /**
-            * Logic for select/deselect all
-            */  
-           const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
+
+            /**
+             * Logic for select/deselect all
+             */
+            const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
             for (const b of controls) {
                 b.addEventListener("click", e => {
                     const change = glossNumDropdown.value
@@ -334,60 +339,55 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
 
             saveBtn.addEventListener("click", connectLinesWithNamedGloss)
 
-            function connectLinesWithNamedGloss(){ 
-                //This is probably going to be the AnnotationPage now??
-                const linesAnnotationId = document.querySelector("div.page").getAttribute("data-marginalia")
-                if(!linesAnnotationId) {
-                    throw new Error("URI for Annotation could not be found.")
-                }
+            function connectLinesWithNamedGloss() {
+                const glossBtns = document.querySelectorAll('.glossBtn')
+                let allGlosses = glossBtns.map(page => {
 
-                // For each selected line, make an Annotation where the line or line segment is the target.
-                // The body is which gloss num on the page it belongs to?
-                let annoPageItems = allLines.filter(l => l.classList.contains("selected"))
-                .map(line => {
-                    return {
-                        "@id": linesAnnotationId,
-                        "@type": "Annotation",
-                        "@context": "http://www.w3.org/ns/anno.jsonld",
-                        target: c['@id'],
-                        body: {"_gloss_num": glossNumDropdown.value},
-                        motivation: "classifying"
+                    const glossLine = {
+                        "@context": "http://iiif.io/api/presentation/3/context.json",
+                        "@type": "AnnotationPage",
+                        "partOf": {
+                            "id": location.hash.substr(1),
+                            "type": "Manifest"
+                        },
+                        target:page.getAttribute('deer-id'),
+                        motivation: "linking",
+                        "items": page.glossAssignments.map(uri=>{
+                            return {
+                                body:uri,
+                                target:page.getAttribute('deer-id'),
+                                motivation:"linking",
+                                '@type': "Annotation",
+                            }
+                        })
                     }
+
+                    return fetch(page.dataset.glossPages? DEER.URLS.OVERWRITE:DEER.URLS.CREATE, {
+                        method: page.dataset.glossPages?'PUT':'POST',
+                        mode: 'cors',
+                        body: JSON.stringify(glossLine)
+                    }).then(res => {
+                        if (!res.ok) {
+                            throw Error(res.statusText)
+                        }
+                        return res.json()
+                    })
                 })
 
-                /**
-                 * Create an Annotation Page for each page of the transcription (gloss).
-                 * That page will contain the selected lines, each of which is an Annotation.
-                 * The Annotation will target the line (or line fragment)
-                 */
-
-                const annotationPage = {
-                  "@context": "http://www.w3.org/ns/anno.jsonld",
-                  "type": "AnnotationPage",
-                  "partOf": window.location.hash.substr(1),
-                  "startIndex": 0,
-                  "items": annoPageItems,
-                  "next": "http://example.org/page2"
-                }
-            
-                /*
-                fetch(DEER.URLS.OVERWRITE, {
-                    method: 'PUT',
-                    mode: 'cors',
-                    body: JSON.stringify(linesAnnotation)
-                }).then(res => {
-                    if (!res.ok) {
-                        throw Error(res.statusText)
-                    }
-                    const ev = new CustomEvent("Lines Update")
-                    globalFeedbackBlip(ev, `Lines updated successfully.`, true)
+                Promise.all(allGlosses)
+                .then(glosses=>{
+                    glosses.map(gloss=>{
+                        document.querySelector(`[deer-id='${gloss.new_obj_stat.target}']`).setAttribute('data-gloss-pages',gloss.new_obj_state['@id'])
+                    })
+                    const ev = new CustomEvent("Gloss assignment Update")
+                    globalFeedbackBlip(ev, `Gloss assignment updated successfully.`, true)
                     saveBtn.style.visibility="hidden"
-                    return res.json()
-                }).catch(err => {
-                    const ev = new CustomEvent("Lines Update")
-                    globalFeedbackBlip(ev, `Lines update failed.`, false)
                 })
-                */
+                .catch(err => {
+                    const event = new CustomEvent("Gloss assignment Update")
+                    globalFeedbackBlip(event, `Gloss assignment failed.`, false)
+                })
+                
             }
             function globalFeedbackBlip(event, message, success) {
                 globalFeedback.innerText = message
@@ -405,12 +405,10 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 }, 3000)
             }
             function renderGlossDesignations() {
-                const pageElement = document.querySelector("div.page")
                 const historyWildcard = { $exists: true, $type: 'array', $eq: [] }
                 const query = {
-                    target: c['@id'],
-                    motivation: "classifying",
-                    'body.locations': { $exists: true },
+                    motivation: "linking",
+                    'partOf.id': location.hash.substr(1),
                     '__rerum.history.next': historyWildcard
                 }
 
@@ -423,56 +421,36 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                         throw Error(res.statusText)
                     }
                     return res.json()
-                }).then(annotations => {
-                    if (annotations.length === 0) {
-                        // no results
-                        const locationAnnotation = {
-                            "@type": "Annotation",
-                            "@context": "http://www.w3.org/ns/anno.jsonld",
-                            target: c['@id'],
-                            body: { locations: {} },
-                            motivation: "classifying"
-                        }
-
-                        fetch(DEER.URLS.CREATE, {
-                            method: 'POST',
-                            mode: 'cors',
-                            headers: {
-                                'Content-Type': 'application/ld+json'
-                            },
-                            body: JSON.stringify(locationAnnotation)
-                        }).then(res => {
-                            if (!res.ok) {
-                                throw Error(res.statusText)
+                }).then(glosses => {
+                    glosses.forEach(gloss=>{
+                        const page = document.querySelector(`[deer-id='${gloss.target}']`)
+                        page.setAttribute('data-gloss-pages',gloss['@id'])
+                        gloss.items.forEach(gl=>page.glossAssignments.add(gloss['@id']))
+                        document.querySelectorAll(`line[title='${gloss.body}']`).forEach(line => {
+                            page.glossAssignments.add(gloss.body)
+                            const badge = line.querySelector('.gloss-badge')
+                            if (badge.getAttribute('data-badge-uri')) {
+                                const nextbadge = badge.cloneNode()
+                                nextbadge.innerHTML = el.innerHTML
+                                nextbadge.setAttribute('data-badge-uri', page.getAttribute('deer-id'))
+                                AttachClickToRemoveHandler(nextbadge)
+                                badge.after(nextbadge)
+                            } else {
+                                badge.innerHTML = el.innerHTML
+                                badge.setAttribute('data-badge-uri', page.getAttribute('deer-id'))
+                                AttachClickToRemoveHandler(badge)
                             }
-                            return res.json()
-                        }).then(loc => {
-                            const ev = new CustomEvent("Marginalia locations loaded")
-                            globalFeedbackBlip(ev, `Marginalia locations loaded`, true)
-                            pageElement.setAttribute("data-marginalia", loc.new_obj_state['@id'])
                         })
-                            .catch(err => console.error(err))
-
-                    } else {
-                        drawAssignment(annotations[0].body.locations)
-                        pageElement.setAttribute("data-marginalia", annotations[0]['@id'])
-                    }
-                })
-                    .catch(err => {
-                        const ev = new CustomEvent("Location annotation query")
-                        globalFeedbackBlip(ev, `Please reload. This crashed. ${err}`, false)
                     })
-
-                function drawAssignment(glossLines) {
-                    for (const line in glossLines) {
-                        const el = document.querySelector(`line[title="${line}"]`)
-                        if (!el) { continue }
-                        const locatedClass = glossLines[line] ? `located ${glossLines[line]}` : ""
-                        el.className = locatedClass
-                    }
-                }
+                    drawAssignment(annotations[0].body.locations)
+                    pageElement.setAttribute("data-marginalia", annotations[0]['@id'])
+                })
+                .catch(err => {
+                    const ev = new CustomEvent("Location annotation query")
+                    globalFeedbackBlip(ev, `Please reload. This crashed. ${err}`, false)
+                })
             }
-            //renderGlossDesignations()
+            renderGlossDesignations()
         }
     }
 }
@@ -574,7 +552,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 if (!line.classList.contains("located")) {
                     line.classList.add("just")
                 }
-                saveBtn.style.visibility="visible"
+                saveBtn.style.visibility = "visible"
             }
 
             const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
@@ -609,7 +587,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                         thisLine.classList.remove(location, "located", "selected", "just")
                         thisLine = thisLine.nextElementSibling
                     }
-                    saveBtn.style.visibility="visible"
+                    saveBtn.style.visibility = "visible"
                 })
             }
             const selected = elem.querySelectorAll(".selected")
@@ -626,7 +604,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 })
 
                 const locationAnnotationId = document.querySelector("div.page").getAttribute("data-marginalia")
-                if(!locationAnnotationId) {
+                if (!locationAnnotationId) {
                     throw new Error("URI for Annotation Location could not be found.")
                 }
 
@@ -652,7 +630,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                     }
                     const ev = new CustomEvent("Locations Update")
                     globalFeedbackBlip(ev, `Locations updated successfully.`, true)
-                    saveBtn.style.visibility="hidden"
+                    saveBtn.style.visibility = "hidden"
                     return res.json()
                 }).catch(err => {
                     const ev = new CustomEvent("Locations Update")
@@ -777,13 +755,13 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                 fetch(elem.getAttribute("deer-listing")).then(r => r.json())
                     .then(list => {
                         elem.manuscripts = new Set()
-                        list.itemListElement.forEach(item=>elem.manuscripts.add(item['@id']))
+                        list.itemListElement.forEach(item => elem.manuscripts.add(item['@id']))
                         for (const a of document.querySelectorAll('.togglePublic')) {
                             const include = elem.manuscripts.has(a.getAttribute("href")) ? "add" : "remove"
                             a.classList[include]("is-included")
                         }
                     })
-                    .then(()=>{
+                    .then(() => {
                         document.querySelectorAll(".removeCollectionItem").forEach(el => el.addEventListener('click', (ev) => {
                             ev.preventDefault()
                             ev.stopPropagation()
@@ -846,21 +824,21 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                             method: "POST",
                             body: JSON.stringify(queryObj)
                         })
-                        .then(r => r.ok ? r.json() : Promise.reject(new Error(r?.text)))
-                        .then(annos => {
-                            let all = annos.map(anno => {
-                                return fetch("http://tinydev.rerum.io/app/delete", {
-                                    method: "DELETE",
-                                    body: anno["@id"]
+                            .then(r => r.ok ? r.json() : Promise.reject(new Error(r?.text)))
+                            .then(annos => {
+                                let all = annos.map(anno => {
+                                    return fetch("http://tinydev.rerum.io/app/delete", {
+                                        method: "DELETE",
+                                        body: anno["@id"]
+                                    })
+                                        .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
+                                        .catch(err => { throw err })
                                 })
-                                    .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
-                                    .catch(err => { throw err })
+                                Promise.all(all).then(success => {
+                                    document.querySelector(`[deer-id="${id}"]`).closest("li").remove()
+                                })
                             })
-                            Promise.all(all).then(success => {
-                                document.querySelector(`[deer-id="${id}"]`).closest("li").remove()
-                            })
-                        })
-                        .catch(err => console.error(`Failed to delete: ${err}`))
+                            .catch(err => console.error(`Failed to delete: ${err}`))
                     }
                 }
 
