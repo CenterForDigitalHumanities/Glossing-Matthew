@@ -194,7 +194,7 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
                 <div class="page">
                     <h3>${b.label}</h3> 
                     <a href="./layout.html#${ms['@id']}">(edit layout)</a>
-                    <a href="./select-TPEN-lines-for-Gloss.html#${ms['@id']}">(edit included lines)</a>
+                    <a href="./select-TPEN-lines-for-Gloss.html#${ms['@id']}">(align named Glosses)</a>
                     <div class="pull-right col-6">
                         <img src="${b.images[0].resource['@id']}">
                     </div>
@@ -741,7 +741,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                 tmpl += `<li>
                 ${visibilityBtn}
                 <a href="${options.link}${val['@id']}">
-                [ <deer-view deer-id="${val["@id"]}" deer-template="prop" deer-key="alternative"></deer-view> ] <deer-view deer-id="${val["@id"]}" deer-template="label">${index + 1}</deer-view>
+                    <deer-view deer-id="${val["@id"]}" deer-template="label">${index + 1}</deer-view>
                 </a>
                 ${removeBtn}
                 </li>`
