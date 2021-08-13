@@ -194,7 +194,7 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
                 <div class="page">
                     <h3>${b.label}</h3> 
                     <a href="./layout.html#${ms['@id']}">(edit layout)</a>
-                    <a href="./select-TPEN-lines-for-Gloss.html#${ms['@id']}">(align named Glosses)</a>
+                    <a href="./align-glosses.html#${ms['@id']}">(align named Glosses)</a>
                     <div class="pull-right col-6">
                         <img src="${b.images[0].resource['@id']}">
                     </div>
