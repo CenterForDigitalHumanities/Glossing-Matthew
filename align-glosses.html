@@ -16,15 +16,22 @@
             <a href="./ms.html" id="thisMS" class="is-hidden">📖 This Manuscript</a>
         </div>
     </gm-header>
-    <form id="ngForm" deer-type="named-gloss" deer-context="http://www.loc.gov/mods" class="row">
-        <input type="text" deer-key="title" placeholder="Display Label" class="col">
-        <input type="hidden" deer-key="targetCollection" value="Glossing-Matthew-Named-Glosses">
-        <input type="submit" value="Add NG : Title Only" class="col">
-    </form>
-    <a href="./manage-glosses.html" class="button">Manage Glosses</a>
-    <deer-view id="collectionList" deer-collection="Glossing-Matthew-Named-Glosses" deer-link="ng.html#" deer-template="ngList">
-        Loading&hellip;
-    </deer-view>
+    <h3 id="glossTitle" class="deer-view send-id" deer-template="label">Gloss Alignment</h3>
+
+    <deer-view deer-id="" class="send-id" deer-template="pageLinks"></deer-view>
+
+    <div class="row">
+        <deer-view id="glossNumBtns" class="col-6" deer-collection="Glossing-Matthew-Named-Glosses"
+            deer-template="glossAssignments"></deer-view>
+        <deer-view id="folioLayout" deer-id="" class="send-id col-6"
+            deer-target-collection="Glossing-Matthew-Named-Glosses" deer-template="glossLines"></deer-view>
+    </div>
+
+    <deer-view id="previewTranscription" deer-template="folioTranscription"></deer-view>
+
+    <pre
+        class="card bg-light is-hidden"><deer-view id="frPreview" deer-template="entity">current state</deer-view></pre>
+
     <gm-footer>
         <a href="./index.html">🏠</a>
         <a href="./manuscripts.html">📚</a>
@@ -43,13 +50,25 @@
     <script src="js/deer.js" type="module"></script>
     <script src="js/app.js" type="module"></script>
     <script>
-        document.addEventListener('deer-created', event => {
-            let e = new CustomEvent("deer-view", { detail: { set: [collectionList] }, bubbles: true })
-            document.dispatchEvent(e)
-            setTimeout(() => location.href = "", 3000)
-        })
+        window.onhashchange = onload = () => {
+            let params = (new URL(document.location)).searchParams
+            let glossid = window.location.hash.substr(1)
+            document.querySelectorAll(".send-id").forEach(el => el.setAttribute("deer-id", glossid))
+            let page = parseInt(params.get("page")) || 1
+            folioLayout.setAttribute("deer-index", page - 1)
+        }
 
-        
+        function broadcast(event = {}, type, element, obj = {}) {
+            let e = new CustomEvent(type, { detail: Object.assign(obj, { target: event.target }), bubbles: true })
+            element.dispatchEvent(e)
+        }
+
+        function alertReturn(noid) {
+            let msg = noid
+                ? "You entered this page without a manuscript URI. Click OK to head back to the list."
+                : "The manuscript this gloss is from does not have a TPEN project associated with it."
+        }
+
     </script>
 </body>
 

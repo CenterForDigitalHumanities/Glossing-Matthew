@@ -192,7 +192,9 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
                 .then(ms => elem.innerHTML = `
                 ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `
                 <div class="page">
-                    <h3>${b.label}</h3> <a href="./layout.html#${ms['@id']}">(edit layout)</a>
+                    <h3>${b.label}</h3> 
+                    <a href="./layout.html#${ms['@id']}">(edit layout)</a>
+                    <a href="./align-glosses.html#${ms['@id']}">(align named Glosses)</a>
                     <div class="pull-right col-6">
                         <img src="${b.images[0].resource['@id']}">
                     </div>
@@ -206,31 +208,259 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
     }
 }
 
-DEER.TEMPLATES.folioTranscriptionForGloss = function (obj, options = {}) {
+DEER.TEMPLATES.glossAssignments = function (obj, options = {}) {
     return {
-        html: obj.tpenProject ? `<div class="is-full-width"> <h3> ... loading preview ... </h3> </div>` : ``,
-        then: (elem) => {
-            fetch("http://t-pen.org/TPEN/manifest/" + obj.tpenProject.value)
-                .then(response => response.json())
-                .then(ms => elem.innerHTML = `
-                ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `
-                <div class="page">
-                    <h3>${b.label}</h3> <a href="./select-TPEN-lines-for-gloss.html#${ms['@id']}">(edit layout)</a>
-                    <div class="pull-right col-6">
-                        <img src="${b.images[0].resource['@id']}">
-                    </div>
-                        ${b.otherContent[0].resources.reduce((aa, bb) => aa += `
-                        <span class="line" title="${bb["@id"]}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}</span>
-                        `, ``)}
-                </div>
+        html: `Loading Glosses&hellip;`,
+        then: elem => {
+            UTILS.listFromCollection(options.collection)
+                .then(glosses => {
+                    elem.innerHTML = glosses.reduce((a, b, i) => a += `<button role="button" 
+            class="deer-view glossBtn" 
+            deer-id="${b['@id']}" 
+            deer-template="label"
+            >${b['@id'] ?? i + 1}</button>`, ``)
+                    elem.querySelectorAll('.glossBtn').forEach(el => {
+                        new DeerRender(el)
+                        el.addEventListener('click', ev => {
+
+                            document.querySelectorAll('line.selected').forEach(line => {
+                                el.glossAssignments.add(line.getAttribute('title'))
+                                const badge = line.querySelector('.gloss-badge')
+                                if (badge.getAttribute('data-badge-uri')) {
+                                    const nextbadge = badge.cloneNode()
+                                    nextbadge.innerHTML = el.innerHTML
+                                    nextbadge.setAttribute('data-badge-uri', el.getAttribute('deer-id'))
+                                    AttachClickToRemoveHandler(nextbadge)
+                                    badge.after(nextbadge)
+                                } else {
+                                    badge.innerHTML = el.innerHTML
+                                    badge.setAttribute('data-badge-uri', el.getAttribute('deer-id'))
+                                    AttachClickToRemoveHandler(badge)
+                                }
+                                line.classList.remove('selected', 'just')
+                            })
+                            saveBtn.style.visibility = "visible"
+
+                        })
+
+                        el.glossAssignments = new Set()
+                    })
+                })
+        }
+    }
+}
+
+function AttachClickToRemoveHandler(elem) {
+    elem.addEventListener('click', ev => {
+        ev.stopPropagation()
+        saveBtn.style.visibility = "visible"
+        if (elem.parentElement.querySelectorAll('.gloss-badge').length > 1) {
+            elem.remove()
+            return
+        }
+        document.querySelector(`.glossBtn[deer-id='${elem.getAttribute('data-badge-uri')}']`)?.glossAssignments.delete(elem.closest('line').getAttribute('title'))
+        elem.removeAttribute('data-badge-uri')
+        elem.innerHTML = ''
+    })
+}
+
+DEER.TEMPLATES.glossLines = function (obj, options = {}) {
+    //TODO we need to know the GlossID here as well.
+    let c = obj.sequences[0].canvases[options.index ?? 0]
+
+    return {
+        html: `
+        <div class="page">
+            <h3>${c.label}</h3>
+            <div class="col">
+                <script>
+                    function batchLine(change) {
+                        [...document.getElementsByTagName("line")].forEach(l=>{l.classList[change]("selected");l.classList.remove("just")})
+                    }
+                </script>
+                <a class="tag is-small" data-change="add">Select All</a>
+                <a class="tag is-small" data-change="remove">Deselect All</a>
+                <a class="tag is-small" data-change="toggle">Invert All</a>
+            </div>
+            <div class="col">
+                <button id="saveBtn" role="button" style="visibility:hidden;">Save Changes</button>
+            </div>
+                ${c.otherContent[0].resources.reduce((aa, bb, i) => aa += `
+                <line title="${bb['@id']}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="gloss-badge tag is-small bd-dark bg-light text-dark"></i></line>
                 `, ``)}
-        `)
+        </div>
+        `,
+        then: elem => {
+            const allLines = elem.getElementsByTagName("line")
+            for (const l of allLines) { l.addEventListener("click", selectLine) }
+
+            function selectLine(event) {
+                const lastClick = document.querySelector("line.just")
+                const line = event.target.closest("line")
+                if (lastClick && event.shiftKey) {
+                    // band-select
+                    const change = lastClick.classList.contains("selected") // change is constant
+                        ? "add"
+                        : "remove"
+                    const lookNext = parseInt(lastClick.getAttribute("index")) < parseInt(line.getAttribute("index"))
+                        ? "nextElementSibling"
+                        : "previousElementSibling"
+                    let changeLine = lastClick
+                    do {
+                        changeLine = changeLine[lookNext]
+                        changeLine.classList[change]("selected")
+                    } while (changeLine !== line)
+                } else {
+                    line.classList.toggle("selected")
+                }
+                if (lastClick) { lastClick.classList.remove("just") }
+                line.classList.add("just")
+            }
+
+
+            /**
+             * Logic for select/deselect all
+             */
+            const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
+            for (const b of controls) {
+                b.addEventListener("click", e => {
+                    const change = glossNumDropdown.value
+                    Array.from(allLines).filter(el => !el.classList.contains("located")).forEach(l => { l.classList[change]("selected"); l.classList.remove("just") })
+                })
+            }
+
+            const selected = elem.querySelectorAll(".selected")
+            for (const s of selected) {
+                s.classList.add("located", assignment)
+                s.classList.remove("just", "selected")
+            }
+            for (const s of selected) {
+                s.classList.remove("just", "selected")
+            }
+
+            saveBtn.addEventListener("click", connectLinesWithNamedGloss)
+
+            function connectLinesWithNamedGloss() {
+                const glossBtns = document.querySelectorAll('.glossBtn')
+                let allGlosses = [...glossBtns].map(page => {
+
+                    const glossLine = {
+                        "@context": "http://iiif.io/api/presentation/3/context.json",
+                        "@type": "AnnotationPage",
+                        "partOf": {
+                            "id": location.hash.substr(1),
+                            "type": "Manifest"
+                        },
+                        target: page.getAttribute('deer-id'),
+                        motivation: "linking",
+                        "items": [...page.glossAssignments].map(uri => {
+                            return {
+                                body: uri,
+                                target: page.getAttribute('deer-id'),
+                                motivation: "linking",
+                                '@type': "Annotation",
+                            }
+                        })
+                    }
+
+                    if (page.dataset.glossPages) {
+                        glossLine['@id'] = page.dataset.glossPages
+                    }
+
+                    return fetch(page.dataset.glossPages ? DEER.URLS.OVERWRITE : DEER.URLS.CREATE, {
+                        method: page.dataset.glossPages ? 'PUT' : 'POST',
+                        mode: 'cors',
+                        body: JSON.stringify(glossLine)
+                    }).then(res => {
+                        if (!res.ok) {
+                            throw Error(res.statusText)
+                        }
+                        return res.json()
+                    })
+                })
+
+                Promise.all(allGlosses)
+                    .then(glosses => {
+                        glosses.map(gloss => {
+                            document.querySelector(`[deer-id='${gloss.new_obj_state.target}']`).setAttribute('data-gloss-pages', gloss.new_obj_state['@id'])
+                        })
+                        const ev = new CustomEvent("Gloss assignment Update")
+                        globalFeedbackBlip(ev, `Gloss assignment updated successfully.`, true)
+                        saveBtn.style.visibility = "hidden"
+                    })
+                    .catch(err => {
+                        const event = new CustomEvent("Gloss assignment Update")
+                        globalFeedbackBlip(event, `Gloss assignment failed.`, false)
+                    })
+
+            }
+            function globalFeedbackBlip(event, message, success) {
+                globalFeedback.innerText = message
+                globalFeedback.classList.add("show")
+                if (success) {
+                    globalFeedback.classList.add("bg-success")
+                } else {
+                    globalFeedback.classList.add("bg-error")
+                }
+                setTimeout(function () {
+                    globalFeedback.classList.remove("show")
+                    globalFeedback.classList.remove("bg-error")
+                    // backup to page before the form
+                    UTILS.broadcast(event, "globalFeedbackFinished", globalFeedback, { message: message })
+                }, 3000)
+            }
+            function renderGlossDesignations() {
+                const historyWildcard = { $exists: true, $type: 'array', $eq: [] }
+                const query = {
+                    motivation: "linking",
+                    'partOf.id': location.hash.substr(1),
+                    '__rerum.history.next': historyWildcard
+                }
+
+                fetch(DEER.URLS.QUERY, {
+                    method: 'POST',
+                    mode: 'cors',
+                    body: JSON.stringify(query)
+                }).then(res => {
+                    if (!res.ok) {
+                        throw Error(res.statusText)
+                    }
+                    return res.json()
+                }).then(glosses => {
+                    glosses.forEach(gloss => {
+                        const page = document.querySelector(`[deer-id='${gloss.target}']`)
+                        page.setAttribute('data-gloss-pages', gloss['@id'])
+                        gloss.items.forEach(gl => {
+                            const line = document.querySelector(`line[title='${gl.body}']`)
+                            if(!line) { return }
+                            page.glossAssignments.add(gl.body)
+                            const badge = line.querySelector('.gloss-badge')
+                            if (badge.getAttribute('data-badge-uri')) {
+                                const nextbadge = badge.cloneNode()
+                                nextbadge.innerHTML = page.innerHTML
+                                nextbadge.setAttribute('data-badge-uri', page.getAttribute('deer-id'))
+                                AttachClickToRemoveHandler(nextbadge)
+                                badge.after(nextbadge)
+                            } else {
+                                badge.innerHTML = page.innerHTML
+                                badge.setAttribute('data-badge-uri', page.getAttribute('deer-id'))
+                                AttachClickToRemoveHandler(badge)
+                            }
+                        })
+                    })
+                })
+                    .catch(err => {
+                        const ev = new CustomEvent("Location annotation query")
+                        globalFeedbackBlip(ev, `Please reload. This crashed. ${err}`, false)
+                    })
+            }
+            renderGlossDesignations()
         }
     }
 }
 
 DEER.TEMPLATES.osd = function (obj, options = {}) {
-    const imgURL = obj.sequences[0].canvases[options.index || 0].images[0].resource['@id']
+    const imgURL = obj.sequences[0].canvases[options.index ?? 0].images[0].resource['@id']
     return {
         html: ``,
         then: elem => {
@@ -248,7 +478,7 @@ DEER.TEMPLATES.osd = function (obj, options = {}) {
 }
 
 DEER.TEMPLATES.lines = function (obj, options = {}) {
-    let c = obj.sequences[0].canvases[options.index || 0]
+    let c = obj.sequences[0].canvases[options.index ?? 0]
     return {
         html: `
         <div class="page">
@@ -326,7 +556,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 if (!line.classList.contains("located")) {
                     line.classList.add("just")
                 }
-                saveBtn.style.visibility="visible"
+                saveBtn.style.visibility = "visible"
             }
 
             const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
@@ -361,7 +591,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                         thisLine.classList.remove(location, "located", "selected", "just")
                         thisLine = thisLine.nextElementSibling
                     }
-                    saveBtn.style.visibility="visible"
+                    saveBtn.style.visibility = "visible"
                 })
             }
             const selected = elem.querySelectorAll(".selected")
@@ -378,7 +608,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 })
 
                 const locationAnnotationId = document.querySelector("div.page").getAttribute("data-marginalia")
-                if(!locationAnnotationId) {
+                if (!locationAnnotationId) {
                     throw new Error("URI for Annotation Location could not be found.")
                 }
 
@@ -404,7 +634,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                     }
                     const ev = new CustomEvent("Locations Update")
                     globalFeedbackBlip(ev, `Locations updated successfully.`, true)
-                    saveBtn.style.visibility="hidden"
+                    saveBtn.style.visibility = "hidden"
                     return res.json()
                 }).catch(err => {
                     const ev = new CustomEvent("Locations Update")
@@ -511,7 +741,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                 tmpl += `<li>
                 ${visibilityBtn}
                 <a href="${options.link}${val['@id']}">
-                [ <deer-view deer-id="${val["@id"]}" deer-template="prop" deer-key="alternative"></deer-view> ] <deer-view deer-id="${val["@id"]}" deer-template="label">${index + 1}</deer-view>
+                    <deer-view deer-id="${val["@id"]}" deer-template="label">${index + 1}</deer-view>
                 </a>
                 ${removeBtn}
                 </li>`
@@ -529,13 +759,13 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                 fetch(elem.getAttribute("deer-listing")).then(r => r.json())
                     .then(list => {
                         elem.manuscripts = new Set()
-                        list.itemListElement.forEach(item=>elem.manuscripts.add(item['@id']))
+                        list.itemListElement.forEach(item => elem.manuscripts.add(item['@id']))
                         for (const a of document.querySelectorAll('.togglePublic')) {
                             const include = elem.manuscripts.has(a.getAttribute("href")) ? "add" : "remove"
                             a.classList[include]("is-included")
                         }
                     })
-                    .then(()=>{
+                    .then(() => {
                         document.querySelectorAll(".removeCollectionItem").forEach(el => el.addEventListener('click', (ev) => {
                             ev.preventDefault()
                             ev.stopPropagation()
@@ -569,7 +799,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                         '@id': elem.getAttribute("deer-listing"),
                         '@context': 'https://schema.org/',
                         '@type': "ItemList",
-                        name: "Glossing Matthew Manuscripts",
+                        name: elem.getAttribute("deer-listing") ?? "Glossing Matthew",
                         numberOfItems: elem.manuscripts.size,
                         itemListElement: mss
                     }
@@ -598,21 +828,21 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                             method: "POST",
                             body: JSON.stringify(queryObj)
                         })
-                        .then(r => r.ok ? r.json() : Promise.reject(new Error(r?.text)))
-                        .then(annos => {
-                            let all = annos.map(anno => {
-                                return fetch("http://tinymatt.rerum.io/gloss/delete", {
-                                    method: "DELETE",
-                                    body: anno["@id"]
+                            .then(r => r.ok ? r.json() : Promise.reject(new Error(r?.text)))
+                            .then(annos => {
+                                let all = annos.map(anno => {
+                                    return fetch("http://tinymatt.rerum.io/gloss/delete", {
+                                        method: "DELETE",
+                                        body: anno["@id"]
+                                    })
+                                        .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
+                                        .catch(err => { throw err })
                                 })
-                                    .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
-                                    .catch(err => { throw err })
+                                Promise.all(all).then(success => {
+                                    document.querySelector(`[deer-id="${id}"]`).closest("li").remove()
+                                })
                             })
-                            Promise.all(all).then(success => {
-                                document.querySelector(`[deer-id="${id}"]`).closest("li").remove()
-                            })
-                        })
-                        .catch(err => console.error(`Failed to delete: ${err}`))
+                            .catch(err => console.error(`Failed to delete: ${err}`))
                     }
                 }
 
