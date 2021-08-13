@@ -799,7 +799,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                         '@id': elem.getAttribute("deer-listing"),
                         '@context': 'https://schema.org/',
                         '@type': "ItemList",
-                        name: "Glossing Matthew Manuscripts",
+                        name: elem.getAttribute("deer-listing") ?? "Glossing Matthew",
                         numberOfItems: elem.manuscripts.size,
                         itemListElement: mss
                     }
