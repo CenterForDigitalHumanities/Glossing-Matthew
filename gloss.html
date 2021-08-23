@@ -162,6 +162,7 @@
                     manifest = event.detail["tpen://base-project"].value
                 }
                 manifest = isNaN(manifest) ? manifest : "http://t-pen.org/TPEN/manifest/" + manifest
+                if(!manifest) { return }
                 fetch(manifest).then(response => response.json()).then(m => {
                     let canvases = []
                     if (m.sequences) {
