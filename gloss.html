@@ -155,7 +155,12 @@
                 }
                 document.querySelector("[deer-key='tpen://base-project']").value = event.detail["tpen://base-project"].value
                 document.querySelector("[deer-key='tpen://base-project']").dispatchEvent(new Event("input"))
-                let manifest = event.detail.url ? event.detail.url.value : event.detail["tpen://base-project"].value
+                let manifest
+                try {
+                    manifest = new URL(event.detail.url?.value ?? event.detail.url)
+                } catch(err) {
+                    manifest = event.detail["tpen://base-project"].value
+                }
                 manifest = isNaN(manifest) ? manifest : "http://t-pen.org/TPEN/manifest/" + manifest
                 fetch(manifest).then(response => response.json()).then(m => {
                     let canvases = []
