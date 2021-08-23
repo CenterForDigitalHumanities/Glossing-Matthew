@@ -187,7 +187,8 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
     return {
         html: obj.tpenProject ? `<div class="is-full-width"> <h3> ... loading preview ... </h3> </div>` : ``,
         then: (elem) => {
-            fetch("http://t-pen.org/TPEN/manifest/" + obj.tpenProject.value)
+            const url = obj.tpenProject?.[0].value ?? obj.tpenProject.value
+            fetch("http://t-pen.org/TPEN/manifest/" + url)
                 .then(response => response.json())
                 .then(ms => elem.innerHTML = `
                 ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `
