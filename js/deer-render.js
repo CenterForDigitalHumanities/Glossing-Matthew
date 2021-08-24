@@ -465,15 +465,20 @@ DEER.TEMPLATES.osd = function (obj, options = {}) {
     return {
         html: ``,
         then: elem => {
-            OpenSeadragon({
-                id: elem.id,
-                tileSources: {
-                    type: 'image',
-                    url: imgURL,
-                    crossOriginPolicy: 'Anonymous',
-                    ajaxWithCredentials: false
-                }
-            })
+            try {
+                OpenSeadragon({
+                    id: elem.id,
+                    tileSources: {
+                        type: 'image',
+                        url: imgURL,
+                        crossOriginPolicy: 'Anonymous',
+                        ajaxWithCredentials: false
+                    }
+                })
+            }
+            catch(err){
+                elem.innerHTML = `<img alt="folio view" src="${imgURL}">`
+            }
         }
     }
 }
