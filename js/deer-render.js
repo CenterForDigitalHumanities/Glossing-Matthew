@@ -461,7 +461,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
 }
 
 DEER.TEMPLATES.osd = function (obj, options = {}) {
-    const index = folioLayout.getAttribute("deer-index") ?? 0
+    const index = options.index ?? folioLayout.getAttribute("deer-index") ?? 0
     const imgURL = obj.sequences[0].canvases[index].images[0].resource['@id']
     const bareImgTemplate = `<img alt="folio view" src="${imgURL}">`
     if(imgURL.includes("TPEN/pageImage")) {

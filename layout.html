@@ -53,6 +53,7 @@
             document.querySelectorAll(".send-id").forEach(el=>el.setAttribute("deer-id",glossid))
             let page = parseInt(params.get("page")) || 1
             folioLayout.setAttribute("deer-index",page-1)
+            zoomy.setAttribute("deer-index",page-1)
         }
 
         function broadcast(event = {}, type, element, obj = {}) {
