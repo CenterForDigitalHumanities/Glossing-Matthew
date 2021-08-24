@@ -187,7 +187,7 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
     return {
         html: obj.tpenProject ? `<div class="is-full-width"> <h3> ... loading preview ... </h3> </div>` : ``,
         then: (elem) => {
-            const url = obj.tpenProject?.[0].value ?? obj.tpenProject.value
+            const url = obj.tpenProject[0]?.value ?? obj.tpenProject.value
             fetch("http://t-pen.org/TPEN/manifest/" + url)
                 .then(response => response.json())
                 .then(ms => elem.innerHTML = `
@@ -960,7 +960,7 @@ DEER.TEMPLATES.pageRanges = function (obj, options = {}) {
                     pointers.map(tc => list.push(fetch(tc.target || tc["@id"] || tc.id).then(response => response.json().catch(err => { __deleted: console.log(err) }))))
                     return Promise.all(list).then(l => l.filter(i => !i.hasOwnProperty("__deleted")))
                 })
-                .then(pages => pages.reduce((a, b) => b += `<deer-view deer-id="${a['@id'] || a.id}" deer-template="gloss">range</deer-view>`, ``))
+                .then(pages => pages.reduce((a, b) => b += `<deer-view deer-id="${a['@id'] ?? a.id}" deer-template="gloss">range</deer-view>`, ``))
                 .then(html => elem.innerHTML = html)
                 .then(() => setTimeout(UTILS.broadcast(undefined, DEER.EVENTS.NEW_VIEW, elem, { set: elem.querySelectorAll("[deer-template]") }), 0))
         },
