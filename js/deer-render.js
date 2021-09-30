@@ -435,7 +435,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                         page.setAttribute('data-gloss-pages', gloss['@id'])
                         gloss.items.forEach(gl => {
                             const line = document.querySelector(`line[title='${gl.body}']`)
-                            if(!line) { return }
+                            if (!line) { return }
                             page.glossAssignments.add(gl.body)
                             const badge = line.querySelector('.gloss-badge')
                             if (badge.getAttribute('data-badge-uri')) {
@@ -466,7 +466,7 @@ DEER.TEMPLATES.osd = function (obj, options = {}) {
     const index = options.index ?? folioLayout.getAttribute("deer-index") ?? 0
     const imgURL = obj.sequences[0].canvases[index].images[0].resource['@id']
     const bareImgTemplate = `<img alt="folio view" src="${imgURL}">`
-    if(imgURL.includes("TPEN/pageImage")) {
+    if (imgURL.includes("TPEN/pageImage")) {
         return bareImgTemplate
     }
     return {
@@ -483,7 +483,7 @@ DEER.TEMPLATES.osd = function (obj, options = {}) {
                     }
                 })
             }
-            catch(err){
+            catch (err) {
                 elem.innerHTML = bareImgTemplate
             }
         }
@@ -1053,7 +1053,7 @@ export default class DeerRender {
                 throw err
             } else {
                 if (this.id) {
-                    limiter(()=>fetch(this.id).then(response => response.json()).then(obj => RENDER.element(this.elem, obj)).catch(err => err))
+                    limiter(() => fetch(this.id).then(response => response.json()).then(obj => RENDER.element(this.elem, obj)).catch(err => err))
                 } else if (this.collection) {
                     // Look not only for direct objects, but also collection annotations
                     // Only the most recent, do not consider history parent or children history nodes
@@ -1074,28 +1074,28 @@ export default class DeerRender {
                     }
 
                     getPagedQuery.bind(this)(100)
-                    .then(()=>RENDER.element(this.elem, listObj))
-                    .catch(err=>{
-                        console.error("Broke with listObj at ",listObj)
-                        RENDER.element(this.elem, listObj)
-                    })
-
-                    function getPagedQuery(lim,it=0) {
-                        return fetch(`${DEER.URLS.QUERY}?limit=${lim}&skip=${it}`, {
-                        method: "POST",
-                        mode: "cors",
-                        body: JSON.stringify(queryObj)
-                    }).then(response => response.json())
-                        .then(list => {
-                            listObj.itemListElement = listObj.itemListElement.concat(list.map(anno=>({'@id':anno.target ?? anno["@id"] ?? anno.id})))
-                            this.elem.setAttribute(DEER.LIST, "itemListElement")
-                            try {
-                                listObj["@type"] = list[0]["@type"] || list[0].type || "ItemList"
-                            } catch (err) { }
-                            if(list.length%lim === 0) {
-                                return getPagedQuery.bind(this)(lim,it+list.length)
-                            }
+                        .then(() => RENDER.element(this.elem, listObj))
+                        .catch(err => {
+                            console.error("Broke with listObj at ", listObj)
+                            RENDER.element(this.elem, listObj)
                         })
+
+                    function getPagedQuery(lim, it = 0) {
+                        return fetch(`${DEER.URLS.QUERY}?limit=${lim}&skip=${it}`, {
+                            method: "POST",
+                            mode: "cors",
+                            body: JSON.stringify(queryObj)
+                        }).then(response => response.json())
+                            .then(list => {
+                                listObj.itemListElement = listObj.itemListElement.concat(list.map(anno => ({ '@id': anno.target ?? anno["@id"] ?? anno.id })))
+                                this.elem.setAttribute(DEER.LIST, "itemListElement")
+                                try {
+                                    listObj["@type"] = list[0]["@type"] || list[0].type || "ItemList"
+                                } catch (err) { }
+                                if (list.length ?? (list.length % lim === 0)) {
+                                    return getPagedQuery.bind(this)(lim, it + list.length)
+                                }
+                            })
                     }
                 }
             }
