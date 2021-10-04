@@ -106,7 +106,7 @@ export default {
                     deerUtils.broadcast(undefined, "deer-view", document, { set: newView })
                 })
             }
-            return { tmpl: html, then }
+            return { html, then }
         },
     },
     version: "alpha"
