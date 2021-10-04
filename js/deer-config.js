@@ -88,7 +88,7 @@ export default {
             }
             const then = async (elem) => {
                 const listing = elem.getAttribute("deer-listing")
-                const pendingLists = !listing ?? fetch(listing).then(res => res.json())
+                const pendingLists = !listing || fetch(listing).then(res => res.json())
                     .then(list => {
                         list[elem.getAttribute("deer-list") ?? "itemListElement"]?.forEach(item => {
                             const record = elem.querySelector(`[deer-id='${item?.['@id'] ?? item?.id ?? item}'`)
