@@ -92,8 +92,10 @@ export default {
                     .then(list => {
                         list.forEach(item => {
                             const record = elem.querySelector(`[deer-id='${item?.['@id'] ?? item?.id ?? item}'`)
-                            record?.innerHTML = item.label
-                            record?.closest('a').classList.add("cached")
+                            if (typeof record === 'object' && record.nodeType !== undefined) {
+                                record.innerHTML = item.label
+                                record.closest('a').classList.add("cached")
+                            }
                         })
                     })
                 await pendingLists
