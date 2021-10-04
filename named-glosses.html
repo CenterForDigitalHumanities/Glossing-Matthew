@@ -22,7 +22,7 @@
         <input type="submit" value="Add NG : Title Only" class="col">
     </form>
     <a href="./manage-glosses.html" class="button">Manage Glosses</a>
-    <deer-view id="collectionList" deer-collection="Glossing-Matthew-Named-Glosses" deer-link="ng.html#" deer-template="ngList">
+    <deer-view id="glossingList" deer-collection="Glossing-Matthew-Named-Glosses" deer-link="ng.html#" deer-template="managedList">
         Loading&hellip;
     </deer-view>
     <gm-footer>
@@ -44,7 +44,7 @@
     <script src="js/app.js" type="module"></script>
     <script>
         document.addEventListener('deer-created', event => {
-            let e = new CustomEvent("deer-view", { detail: { set: [collectionList] }, bubbles: true })
+            let e = new CustomEvent("deer-view", { detail: { set: [glossingList] }, bubbles: true })
             document.dispatchEvent(e)
             setTimeout(() => location.href = "", 3000)
         })
