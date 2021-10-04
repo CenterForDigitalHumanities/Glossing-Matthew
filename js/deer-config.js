@@ -90,7 +90,7 @@ export default {
                 const listing = elem.getAttribute("deer-listing")
                 const pendingLists = !listing && fetch(listing).then(res => res.json())
                     .then(list => {
-                        list.forEach(item => {
+                        list[elem.getAttribute("deer-list") ?? "itemListElement"]?.forEach(item => {
                             const record = elem.querySelector(`[deer-id='${item?.['@id'] ?? item?.id ?? item}'`)
                             if (typeof record === 'object' && record.nodeType !== undefined) {
                                 record.innerHTML = item.label
