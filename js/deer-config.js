@@ -1,4 +1,4 @@
-import deerUtils from "./deer-utils"
+import deerUtils from "./deer-utils.js"
 
 export default {
     ID: "deer-id", // attribute, URI for resource to render
