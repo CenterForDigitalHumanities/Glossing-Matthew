@@ -1,3 +1,5 @@
+import deerUtils from "./deer-utils"
+
 export default {
     ID: "deer-id", // attribute, URI for resource to render
     TYPE: "deer-type", // attribute, JSON-LD @type
@@ -30,7 +32,7 @@ export default {
         QUERY: "http://tinymatt.rerum.io/gloss/query",
         OVERWRITE: "http://tinymatt.rerum.io/gloss/overwrite",
         SINCE: "http://store.rerum.io/v1/since"
-    },    
+    },
 
     EVENTS: {
         CREATED: "deer-created",
@@ -38,8 +40,8 @@ export default {
         LOADED: "deer-loaded",
         NEW_VIEW: "deer-view",
         NEW_FORM: "deer-form",
-        VIEW_RENDERED : "deer-view-rendered",
-        FORM_RENDERED : "deer-form-rendered",
+        VIEW_RENDERED: "deer-view-rendered",
+        FORM_RENDERED: "deer-form-rendered",
         CLICKED: "deer-clicked"
     },
 
@@ -63,7 +65,7 @@ export default {
                 obj[options.list].forEach((val, index) => {
                     tmpl += `<li>
                     <a href="${options.link}${val['@id']}">
-                    [ <deer-view deer-id="${val["@id"]}" deer-template="prop" deer-key="alternative"></deer-view> ] <deer-view deer-id="${val["@id"]}" deer-template="label">${index+1}</deer-view>
+                    [ <deer-view deer-id="${val["@id"]}" deer-template="prop" deer-key="alternative"></deer-view> ] <deer-view deer-id="${val["@id"]}" deer-template="label">${index + 1}</deer-view>
                     </a>
                     </li>`
                 })
@@ -78,13 +80,30 @@ export default {
                 obj[options.list].forEach((val, index) => {
                     tmpl += `<li>
                     <a href="${options.link}${val['@id']}">
-                    <deer-view deer-id="${val["@id"]}" deer-template="label">${index+1}</deer-view>
+                    <deer-view deer-id="${val["@id"]}" deer-template="label">${index + 1}</deer-view>
                     </a>
                     </li>`
                 })
                 tmpl += `</ul>`
             }
-            return tmpl
+            const then = async (elem) => {
+                const listing = elem.getAttribute("deer-listing")
+                const pendingLists = !listing ?? fetch(listing).then(res => res.json())
+                    .then(list => {
+                        list.forEach(item => {
+                            elem.querySelector(`[deer-id='${item?.['@id'] ?? item?.id ?? item}'`)?.innerHTML = item.label
+                            elem.classList.add("cached")
+                        })
+                    })
+                await pendingLists
+                const newView = new Set()
+                elem.querySelectorAll("a:not(.cached)").forEach(item => {
+                    item.innerHTML = `<deer-view deer-id="${val["@id"]}" deer-template="label">${index + 1}</deer-view>`
+                    newView.add(item)
+                    deerUtils.broadcast(undefined, "deer-view", document, { set: newView })
+                })
+            }
+            return { tmpl, then }
         },
     },
     version: "alpha"
