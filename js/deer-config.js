@@ -80,7 +80,7 @@ export default {
                 obj[options.list].forEach((val, index) => {
                     tmpl += `<li>
                     <a href="${options.link}${val['@id']}">
-                    <deer-view deer-id="${val["@id"]}" deer-template="label">${index + 1}</deer-view>
+                    <span deer-id="${val["@id"]}">${index + 1}</span>
                     </a>
                     </li>`
                 })
@@ -91,8 +91,9 @@ export default {
                 const pendingLists = !listing ?? fetch(listing).then(res => res.json())
                     .then(list => {
                         list.forEach(item => {
-                            elem.querySelector(`[deer-id='${item?.['@id'] ?? item?.id ?? item}'`)?.innerHTML = item.label
-                            elem.classList.add("cached")
+                            const record = elem.querySelector(`[deer-id='${item?.['@id'] ?? item?.id ?? item}'`)
+                            record?.innerHTML = item.label
+                            record?.closest('a').classList.add("cached")
                         })
                     })
                 await pendingLists
