@@ -45,8 +45,8 @@
     <script src="js/deer.js" type="module"></script>
     <script src="js/app.js" type="module"></script>
     <script>
-        checkAll.addEventListener('click', ev => document.querySelectorAll('.togglePublic').forEach(a => a.classList.add("is-included")))
-        checkInvert.addEventListener('click', ev => document.querySelectorAll('.togglePublic').forEach(a => a.classList.toggle("is-included")))
+        checkAll.addEventListener('click', ev => document.querySelectorAll('.togglePublic').forEach(a => a.classList.has("is-included") ?? a.click()))
+        checkInvert.addEventListener('click', ev => document.querySelectorAll('.togglePublic').forEach(a => a.click()))
     </script>
 </body>
 
