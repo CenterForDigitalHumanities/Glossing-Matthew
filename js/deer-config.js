@@ -100,8 +100,9 @@ export default {
                     })
                 await pendingLists
                 const newView = new Set()
-                elem.querySelectorAll("a:not(.cached)").forEach(item => {
-                    item.innerHTML = `<deer-view deer-id="${val["@id"]}" deer-template="label">${index + 1}</deer-view>`
+                elem.querySelectorAll("a:not(.cached) span").forEach(item,index => {
+                    item.classList.add("deer-view")
+                    item.setAttribute("deer-template","label")
                     newView.add(item)
                     deerUtils.broadcast(undefined, "deer-view", document, { set: newView })
                 })
