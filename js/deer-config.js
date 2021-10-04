@@ -74,17 +74,17 @@ export default {
             return tmpl
         },
         ngList: function (obj, options = {}) {
-            let tmpl = `<h2>Named Glosses</h2>`
+            let html = `<h2>Named Glosses</h2>`
             if (options.list) {
-                tmpl += `<ul>`
+                html += `<ul>`
                 obj[options.list].forEach((val, index) => {
-                    tmpl += `<li>
+                    html += `<li>
                     <a href="${options.link}${val['@id']}">
                     <span deer-id="${val["@id"]}">${index + 1}</span>
                     </a>
                     </li>`
                 })
-                tmpl += `</ul>`
+                html += `</ul>`
             }
             const then = async (elem) => {
                 const listing = elem.getAttribute("deer-listing")
@@ -106,7 +106,7 @@ export default {
                     deerUtils.broadcast(undefined, "deer-view", document, { set: newView })
                 })
             }
-            return { tmpl, then }
+            return { tmpl: html, then }
         },
     },
     version: "alpha"
