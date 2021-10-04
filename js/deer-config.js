@@ -1,3 +1,5 @@
+import deerUtils from "./deer-utils.js"
+
 export default {
     ID: "deer-id", // attribute, URI for resource to render
     TYPE: "deer-type", // attribute, JSON-LD @type
@@ -30,7 +32,7 @@ export default {
         QUERY: "http://tinymatt.rerum.io/gloss/query",
         OVERWRITE: "http://tinymatt.rerum.io/gloss/overwrite",
         SINCE: "http://store.rerum.io/v1/since"
-    },    
+    },
 
     EVENTS: {
         CREATED: "deer-created",
@@ -38,8 +40,8 @@ export default {
         LOADED: "deer-loaded",
         NEW_VIEW: "deer-view",
         NEW_FORM: "deer-form",
-        VIEW_RENDERED : "deer-view-rendered",
-        FORM_RENDERED : "deer-form-rendered",
+        VIEW_RENDERED: "deer-view-rendered",
+        FORM_RENDERED: "deer-form-rendered",
         CLICKED: "deer-clicked"
     },
 
@@ -63,7 +65,7 @@ export default {
                 obj[options.list].forEach((val, index) => {
                     tmpl += `<li>
                     <a href="${options.link}${val['@id']}">
-                    [ <deer-view deer-id="${val["@id"]}" deer-template="prop" deer-key="alternative"></deer-view> ] <deer-view deer-id="${val["@id"]}" deer-template="label">${index+1}</deer-view>
+                    [ <deer-view deer-id="${val["@id"]}" deer-template="prop" deer-key="alternative"></deer-view> ] <deer-view deer-id="${val["@id"]}" deer-template="label">${index + 1}</deer-view>
                     </a>
                     </li>`
                 })
@@ -72,19 +74,40 @@ export default {
             return tmpl
         },
         ngList: function (obj, options = {}) {
-            let tmpl = `<h2>Named Glosses</h2>`
+            let html = `<h2>Named Glosses</h2>`
             if (options.list) {
-                tmpl += `<ul>`
+                html += `<ul>`
                 obj[options.list].forEach((val, index) => {
-                    tmpl += `<li>
+                    html += `<li>
                     <a href="${options.link}${val['@id']}">
-                    <deer-view deer-id="${val["@id"]}" deer-template="label">${index+1}</deer-view>
+                    <span deer-id="${val["@id"]}">${index + 1}</span>
                     </a>
                     </li>`
                 })
-                tmpl += `</ul>`
+                html += `</ul>`
             }
-            return tmpl
+            const then = async (elem) => {
+                const listing = elem.getAttribute("deer-listing")
+                const pendingLists = !listing || fetch(listing).then(res => res.json())
+                    .then(list => {
+                        list[elem.getAttribute("deer-list") ?? "itemListElement"]?.forEach(item => {
+                            const record = elem.querySelector(`[deer-id='${item?.['@id'] ?? item?.id ?? item}'`)
+                            if (typeof record === 'object' && record.nodeType !== undefined) {
+                                record.innerHTML = item.label
+                                record.closest('a').classList.add("cached")
+                            }
+                        })
+                    })
+                await pendingLists
+                const newView = new Set()
+                elem.querySelectorAll("a:not(.cached) span").forEach((item,index) => {
+                    item.classList.add("deer-view")
+                    item.setAttribute("deer-template","label")
+                    newView.add(item)
+                })
+                deerUtils.broadcast(undefined, "deer-view", document, { set: newView })
+            }
+            return { html, then }
         },
     },
     version: "alpha"

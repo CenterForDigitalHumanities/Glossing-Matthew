@@ -771,10 +771,10 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
 
                 fetch(elem.getAttribute("deer-listing")).then(r => r.json())
                     .then(list => {
-                        elem.manuscripts = new Set()
-                        list.itemListElement.forEach(item => elem.manuscripts.add(item['@id']))
+                        elem.listCache = new Set()
+                        list.itemListElement.forEach(item => elem.listCache.add(item['@id']))
                         for (const a of document.querySelectorAll('.togglePublic')) {
-                            const include = elem.manuscripts.has(a.getAttribute("href")) ? "add" : "remove"
+                            const include = elem.listCache.has(a.getAttribute("href")) ? "add" : "remove"
                             a.classList[include]("is-included")
                         }
                     })
@@ -790,9 +790,9 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                             ev.preventDefault()
                             ev.stopPropagation()
                             const uri = a.getAttribute("href")
-                            const included = elem.manuscripts.has(uri)
+                            const included = elem.listCache.has(uri)
                             a.classList[included ? "remove" : "add"]("is-included")
-                            elem.manuscripts[included ? "delete" : "add"](uri)
+                            elem.listCache[included ? "delete" : "add"](uri)
                             saveList.style.visibility = "visible"
                         }))
                         saveList.addEventListener('click', overwriteList)
@@ -801,7 +801,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
 
                 function overwriteList() {
                     let mss = []
-                    elem.manuscripts.forEach(uri => {
+                    elem.listCache.forEach(uri => {
                         mss.push({
                             label: document.querySelector(`deer-view[deer-id='${uri}']`).textContent.trim(),
                             '@id': uri
@@ -813,7 +813,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                         '@context': 'https://schema.org/',
                         '@type': "ItemList",
                         name: elem.getAttribute("deer-listing") ?? "Glossing Matthew",
-                        numberOfItems: elem.manuscripts.size,
+                        numberOfItems: elem.listCache.size,
                         itemListElement: mss
                     }
 
