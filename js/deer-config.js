@@ -88,7 +88,7 @@ export default {
             }
             const then = async (elem) => {
                 const listing = elem.getAttribute("deer-listing")
-                const pendingLists = !listing ?? fetch(listing).then(res => res.json())
+                const pendingLists = !listing && fetch(listing).then(res => res.json())
                     .then(list => {
                         list.forEach(item => {
                             const record = elem.querySelector(`[deer-id='${item?.['@id'] ?? item?.id ?? item}'`)
@@ -104,8 +104,8 @@ export default {
                     item.classList.add("deer-view")
                     item.setAttribute("deer-template","label")
                     newView.add(item)
-                    deerUtils.broadcast(undefined, "deer-view", document, { set: newView })
                 })
+                deerUtils.broadcast(undefined, "deer-view", document, { set: newView })
             }
             return { html, then }
         },
