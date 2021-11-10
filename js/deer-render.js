@@ -196,7 +196,7 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
                 ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `
                 <div class="page">
                     <h3>${b.label}</h3> 
-                    <a href="./layout.html#${ms['@id']}">(edit layout)</a>
+                    <a href="./layout.html#${ms['@id']}?partOf=${elem.getAttribute("deer-partof")}">(edit layout)</a>
                     <a href="./align-glosses.html#${ms['@id']}">(align named Glosses)</a>
                     <div class="pull-right col-6">
                         <img src="${b.images[0].resource['@id']}">
