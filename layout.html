@@ -51,7 +51,10 @@
             let params = (new URL(document.location)).searchParams
             let glossid = window.location.hash.substr(1)
             let msid = params.get("partOf")
-            thisMS.setAttribute("href", "./ms.html#" + msid)
+            if(msid){
+                thisMS.setAttribute("href", "./ms.html#" + msid)
+                thisMS.classList.remove("is-hidden")
+            }
 
             document.querySelectorAll(".send-id").forEach(el => el.setAttribute("deer-id", glossid))
             let page = parseInt(params.get("page")) || 1
