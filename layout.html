@@ -11,8 +11,8 @@
     <gm-header>
         <div class="tabs">
             <a href="./index.html">🏠</a>
-            <a href="./named-glosses.html">✏️ Named Glosses</a> <a href="./manuscripts.html">📚 View Manuscripts</a>
-
+            <a href="./named-glosses.html">✏️ Named Glosses</a>
+            <a href="./manuscripts.html">📚 View Manuscripts</a>
             <a href="./ms.html" id="thisMS" class="is-hidden">📖 This Manuscript</a>
         </div>
     </gm-header>
@@ -32,7 +32,7 @@
     <gm-footer>
         <a href="./index.html">🏠</a>
         <a href="./manuscripts.html">📚</a>
-        <a href="./named-glosses.html">✏️</a>
+        <a href="./named-glosses.html">📑</a>
         <a rel="noopener noreferrer" title="View on GitHub"
             href="https://github.com/CenterForDigitalHumanities/Glossing-Matthew" target="_blank">
             <svg height="16" class="octicon octicon-mark-github" viewBox="0 0 16 16" version="1.1" width="16"
@@ -51,7 +51,7 @@
             let params = (new URL(document.location)).searchParams
             let glossid = window.location.hash.substr(1)
             let msid = params.get("partOf")
-            if(msid){
+            if (msid) {
                 thisMS.setAttribute("href", "./ms.html#" + msid)
                 thisMS.classList.remove("is-hidden")
             }

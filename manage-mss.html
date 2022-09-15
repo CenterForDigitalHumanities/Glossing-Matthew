@@ -1,6 +1,5 @@
-
 <!DOCTYPE html>
-<html lang="en"> 
+<html lang="en">
 
 <head>
     <title>Glossing Matthew Manuscripts</title>
@@ -13,22 +12,23 @@
     <gm-header>
         <div class="tabs">
             <a href="./index.html">🏠</a>
-        <a href="./named-glosses.html">✏️ Named Glosses</a>            <a href="./manuscripts.html">📚 View Manuscripts</a>
-
+            <a href="./manuscripts.html">📚 View Manuscripts</a>
+            <a href="./named-glosses.html">📑 Named Glosses</a>
             <a href="./ms.html" id="thisMS" class="is-hidden">📖 This Manuscript</a>
         </div>
     </gm-header>
     <h1 class="text-primary"> Managing Glossing Matthew Manuscripts </h1>
     <button id="saveList" style="visibility: hidden;" class="button primary" role="button">Save List</button>
     <div class="row">
-        <deer-view id="collectionList" deer-listing="http://store.rerum.io/v1/id/610ad6f1ffce846a83e70613" deer-collection="Glossing-Matthew-dev" deer-link="ms.html#" deer-template="managedlist">
+        <deer-view id="collectionList" deer-listing="http://store.rerum.io/v1/id/610ad6f1ffce846a83e70613"
+            deer-collection="Glossing-Matthew-dev" deer-link="ms.html#" deer-template="managedlist">
             Loading&hellip;
         </deer-view>
-            </div>
+    </div>
     <gm-footer>
         <a href="./index.html">🏠</a>
         <a href="./manuscripts.html">📚</a>
-        <a href="./named-glosses.html">✏️</a>
+        <a href="./named-glosses.html">📑</a>
         <a rel="noopener noreferrer" title="View on GitHub"
             href="https://github.com/CenterForDigitalHumanities/Glossing-Matthew" target="_blank">
             <svg height="16" class="octicon octicon-mark-github" viewBox="0 0 16 16" version="1.1" width="16"
@@ -41,7 +41,7 @@
     </gm-footer>
     <div id="globalFeedback" class="card is-center"></div>
     <script src="js/deer.js" type="module"></script>
-    <script src="js/app.js" type="module"></script> 
+    <script src="js/app.js" type="module"></script>
 </body>
 
 </html>
