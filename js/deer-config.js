@@ -75,7 +75,7 @@ export default {
         },
         ngList: function (obj, options = {}) {
             let html = `<h2>Named Glosses</h2>
-            <input type="text" placeholder="&hellip;Type to Filter" class="is-hidden">`
+            <input type="text" placeholder="&hellip;Type to filter by incipit" class="is-hidden">`
             if (options.list) {
                 html += `<ul>`
                 obj[options.list].forEach((val, index) => {
@@ -109,7 +109,7 @@ export default {
                 const filter = elem.querySelector('input')
                 filter.classList.remove('is-hidden')
                 filter.addEventListener('input',ev=>debounce(filterGlosses(ev?.target.value)))
-                function debounce(func,timeout = 300) {
+                function debounce(func,timeout = 500) {
                     let timeRemains
                     return (...args) => {
                         clearTimeout(timeRemains)
@@ -121,7 +121,8 @@ export default {
                     const items = elem.querySelectorAll('li')
                     items.forEach(el=>{
                         const action = el.textContent.trim().toLowerCase().includes(query) ? "remove" : "add"
-                        el.classList[action]("is-hidden")
+                        el.classList[action](`is-hidden`,`un${action}-item`)
+                        setTimeout(()=>el.classList.remove(`un${action}-item`),500)
                     })
                 }
                 deerUtils.broadcast(undefined, "deer-view", document, { set: newView })
