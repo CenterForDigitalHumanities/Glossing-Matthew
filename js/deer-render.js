@@ -772,7 +772,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                 fetch(elem.getAttribute("deer-listing")).then(r => r.json())
                     .then(list => {
                         elem.listCache = new Set()
-                        list.itemListElement.forEach(item => elem.listCache.add(item['@id']))
+                        list.itemListElement?.forEach(item => elem.listCache.add(item['@id']))
                         for (const a of document.querySelectorAll('.togglePublic')) {
                             const include = elem.listCache.has(a.getAttribute("href")) ? "add" : "remove"
                             a.classList[include]("is-included")
