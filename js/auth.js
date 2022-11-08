@@ -3,11 +3,11 @@
  * @author cubap
  * 
  * @description This module includes a custom `<button is="auth-button">` element for authentication within 
- * the Dunbar Public Library and Archive Project.
+ * the Gallery of Glosses Project, specifically the data entry interfaces.
  * Notes: 
  * - Include this module and a button[is='auth-button'] element to use. 
  * - Add the `disabled` property on any page that should be available to the public, but knowing the user may be helpful.
- * - This can be made more generic by passing in the constants and parameterizing {app:'dla'}.
+ * - This can be made more generic by passing in the constants and parameterizing {app:'glossing'}.
  */
 
 import 'https://cdn.auth0.com/js/auth0/9.19.0/auth0.min.js'
@@ -29,11 +29,11 @@ const webAuth = new auth0.WebAuth({
 
 const logout = () => {
     localStorage.removeItem("userToken")
-    delete window.DLA_USER
+    delete window.GOG_USER
     document.querySelectorAll('[is="auth-creator"]').forEach(el=>el.connectedCallback())
     webAuth.logout({ returnTo: origin })
 }
-const login = (custom) => webAuth.authorize(Object.assign({ authParamsMap: { 'app': 'dla' } },custom))
+const login = (custom) => webAuth.authorize(Object.assign({ authParamsMap: { 'app': 'glossing' } },custom))
 
 const getReferringPage = () => {
     try {
@@ -60,12 +60,12 @@ class AuthButton extends HTMLButtonElement {
             const ref = getReferringPage()
             if (ref && ref !== location.href) { location.href = ref }
             localStorage.setItem("userToken", result.idToken)
-            window.DLA_USER = result.idTokenPayload
-            window.DLA_USER.authorization = result.accessToken
+            window.GOG_USER = result.idTokenPayload
+            window.GOG_USER.authorization = result.accessToken
             document.querySelectorAll('[is="auth-creator"]').forEach(el=>el.connectedCallback())
-            this.innerText = `Logout ${DLA_USER.nickname}`
+            this.innerText = `Logout ${GOG_USER.nickname}`
             this.removeAttribute('disabled')
-            const loginEvent = new CustomEvent('dla-authenticated',{detail:window.DLA_USER})
+            const loginEvent = new CustomEvent('dla-authenticated',{detail:window.GOG_USER})
             this.dispatchEvent(loginEvent)
         })
     }
@@ -79,8 +79,8 @@ class AuthCreator extends HTMLInputElement {
     }
 
     connectedCallback() {
-        if(!window.DLA_USER) { return }
-        this.value = DLA_USER["http://store.rerum.io/agent"] ?? "anonymous"
+        if(!window.GOG_USER) { return }
+        this.value = GOG_USER["http://store.rerum.io/agent"] ?? "anonymous"
     }
 }
 
