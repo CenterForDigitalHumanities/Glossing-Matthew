@@ -15,12 +15,14 @@
             <a href="./manuscripts.html">📚 View Manuscripts</a>
             <a href="./named-glosses.html">📑 Named Glosses</a>
             <a href="./ms.html" id="thisMS" class="is-hidden">📖 This Manuscript</a>
-            <auth-button class="container">
-                <button is="auth-button">login</button>
-            </auth-button>
         </div>
+        <auth-button class="container">
+            <button is="auth-button">login</button>
+        </auth-button>
+
     </gm-header>
     <h1 class="text-primary"> Managing Glossing Matthew Manuscripts </h1>
+    <input is="auth-creator" type="hidden" deer-key="creator" />
     <button id="saveList" style="visibility: hidden;" class="button primary" role="button">Save List</button>
     <div class="row">
         <deer-view id="collectionList" deer-listing="http://store.rerum.io/v1/id/610ad6f1ffce846a83e70613"

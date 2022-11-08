@@ -14,14 +14,16 @@
             <a href="./manuscripts.html">📚 View Manuscripts</a>
             <a href="./named-glosses.html">📑 Named Glosses</a>
             <a href="./ms.html" id="thisMS" class="is-hidden">📖 This Manuscript</a>
-            <auth-button class="container">
-                <button is="auth-button">login</button>
-            </auth-button>
         </div>
+        <auth-button class="container">
+            <button is="auth-button">login</button>
+        </auth-button>
+
     </gm-header>
     <form id="ngForm" deer-type="named-gloss" deer-context="http://www.loc.gov/mods" class="row">
         <input type="text" deer-key="title" placeholder="Display Label" class="col">
         <input type="hidden" deer-key="targetCollection" value="Glossing-Matthew-Named-Glosses">
+        <input is="auth-creator" type="hidden" deer-key="creator" />
         <input type="submit" value="Add NG : Title Only" class="col">
     </form>
     <a href="./manage-glosses.html" class="button">Manage Glosses</a>

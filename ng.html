@@ -45,10 +45,11 @@
             <a href="./manuscripts.html">📚 View Manuscripts</a>
             <a href="./named-glosses.html">📑 Named Glosses</a>
             <a href="./ms.html" id="thisMS" class="is-hidden">📖 This Manuscript</a>
-            <auth-button class="container">
-                <button is="auth-button">login</button>
-            </auth-button>
         </div>
+        <auth-button class="container">
+            <button is="auth-button">login</button>
+        </auth-button>
+
     </gm-header>
     <h2> Add Named Gloss </h2>
     <p>
@@ -57,6 +58,7 @@
     </p>
     <form id="named-gloss" deer-type="NamedGloss" deer-context="http://purl.org/dc/terms">
         <input type="hidden" deer-key="targetCollection" value="Glossing-Matthew-Named-Glosses">
+        <input is="auth-creator" type="hidden" deer-key="creator" />
         <div class="row">
             <label class="col-3 col-2-md text-right">Label:</label>
             <input type="text" deer-key="title" placeholder="Label" class="col-9 col-10-md">

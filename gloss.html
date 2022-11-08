@@ -16,14 +16,16 @@
             <a href="./named-glosses.html">📑 Named Glosses</a>
 
             <a href="./ms.html" id="thisMS">📖 This Manuscript</a>
-            <auth-button class="container">
-                <button is="auth-button">login</button>
-            </auth-button>
         </div>
+        <auth-button class="container">
+            <button is="auth-button">login</button>
+        </auth-button>
+
     </gm-header>
     <div id="pageRanges"></div>
     <form id="folioRange" deer-type="Range" deer-motivation="bookmarking"
         deer-context="https://iiif.io/api/presentation/3/context.json">
+        <input is="auth-creator" type="hidden" deer-key="creator" />
         <input type="hidden" deer-key="partOf">
         <input type="hidden" deer-key="additionalType" value="Gloss">
         <div class="row">
