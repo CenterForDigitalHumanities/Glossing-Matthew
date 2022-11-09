@@ -14,7 +14,7 @@ import 'https://cdn.auth0.com/js/auth0/9.19.0/auth0.min.js'
 
 const AUDIENCE = "https://cubap.auth0.com/api/v2/"
 const ISSUER_BASE_URL = "cubap.auth0.com"
-const CLIENT_ID = "z1DuwzGPYKmF7POW9LiAipO5MvKSDERM"
+const CLIENT_ID = "4TztHfVXjvs4H6ByCOXgwxtgA8IEQHsD"
 const DOMAIN = "cubap.auth0.com"
 
 const webAuth = new auth0.WebAuth({
