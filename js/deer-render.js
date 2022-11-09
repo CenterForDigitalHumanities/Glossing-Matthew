@@ -373,7 +373,11 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                     return fetch(page.dataset.glossPages ? DEER.URLS.OVERWRITE : DEER.URLS.CREATE, {
                         method: page.dataset.glossPages ? 'PUT' : 'POST',
                         mode: 'cors',
-                        body: JSON.stringify(glossLine)
+                        body: JSON.stringify(glossLine),
+                        headers: {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                        }
                     }).then(res => {
                         if (!res.ok) {
                             throw Error(res.statusText)
@@ -640,7 +644,11 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 fetch(DEER.URLS.OVERWRITE, {
                     method: 'PUT',
                     mode: 'cors',
-                    body: JSON.stringify(locationAnnotation)
+                    body: JSON.stringify(locationAnnotation),
+                    headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                    }
                 }).then(res => {
                     if (!res.ok) {
                         throw Error(res.statusText)
@@ -704,7 +712,8 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                             method: 'POST',
                             mode: 'cors',
                             headers: {
-                                'Content-Type': 'application/ld+json'
+                                'Content-Type': 'application/ld+json; charset=utf-8',
+                                "Authorization": `Bearer ${window.GOG_USER.authorization}`
                             },
                             body: JSON.stringify(locationAnnotation)
                         }).then(res => {
@@ -820,7 +829,11 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                     fetch(DEER.URLS.OVERWRITE, {
                         method: "PUT",
                         mode: 'cors',
-                        body: JSON.stringify(list)
+                        body: JSON.stringify(list),
+                        headers: {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                        }
                     }).then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
                         .catch(err => alert(`Failed to save: ${err}`))
                 }
@@ -846,7 +859,11 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                                 let all = annos.map(anno => {
                                     return fetch("http://tinymatt.rerum.io/gloss/delete", {
                                         method: "DELETE",
-                                        body: anno["@id"]
+                                        body: anno["@id"],
+                                        headers: {
+                                        "Content-Type": "application/json; charset=utf-8",
+                                        "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                                        }
                                     })
                                         .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
                                         .catch(err => { throw err })

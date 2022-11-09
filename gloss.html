@@ -204,7 +204,11 @@
                 if (id.length === 0) throw "new form"
                 fetch("http://tinymatt.rerum.io/gloss/delete", {
                     method: "DELETE",
-                    body: id
+                    body: id,
+                    headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                    }
                 }).then(obj => {
                     broadcast(event, "deer-updated", gloss)
                     setTimeout(() => location.hash = "", 2000)

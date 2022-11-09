@@ -157,7 +157,11 @@
                 let collectorId = document.querySelector('[deer-key="targetCollection"]').getAttribute("deer-source")
                 fetch("http://tinymatt.rerum.io/gloss/delete", {
                     method: "DELETE",
-                    body: collectorId
+                    body: collectorId,
+                    headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                    }
                 }).then(obj => {
                     location.href = "./named-glosses.html"
                 })
