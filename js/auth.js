@@ -65,7 +65,7 @@ class AuthButton extends HTMLButtonElement {
             document.querySelectorAll('[is="auth-creator"]').forEach(el=>el.connectedCallback())
             this.innerText = `Logout ${GOG_USER.nickname}`
             this.removeAttribute('disabled')
-            const loginEvent = new CustomEvent('dla-authenticated',{detail:window.GOG_USER})
+            const loginEvent = new CustomEvent('gog-authenticated',{detail:window.GOG_USER})
             this.dispatchEvent(loginEvent)
         })
     }
