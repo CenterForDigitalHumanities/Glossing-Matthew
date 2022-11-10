@@ -5,6 +5,7 @@
     <title>Glossing Matthew</title>
     <link rel="stylesheet" href="css/gloss.css">
     <link href="favicon.ico" rel="icon" type="image/x-icon" />
+    <script src="/js/auth.js" type="module"></script>
     <style>
         .tagWidget {
             margin-bottom: 15px;
@@ -34,6 +35,7 @@
             border-right: 1px dotted black;
             padding: 4px;
         }
+
     </style>
 </head>
 
@@ -45,6 +47,10 @@
             <a href="./named-glosses.html">📑 Named Glosses</a>
             <a href="./ms.html" id="thisMS" class="is-hidden">📖 This Manuscript</a>
         </div>
+        <auth-button class="container">
+            <button is="auth-button">login</button>
+        </auth-button>
+
     </gm-header>
     <h2> Add Named Gloss </h2>
     <p>
@@ -53,6 +59,7 @@
     </p>
     <form id="named-gloss" deer-type="NamedGloss" deer-context="http://purl.org/dc/terms">
         <input type="hidden" deer-key="targetCollection" value="Glossing-Matthew-Named-Glosses">
+        <input is="auth-creator" type="hidden" deer-key="creator" />
         <div class="row">
             <label class="col-3 col-2-md text-right">Label:</label>
             <input type="text" deer-key="title" placeholder="Label" class="col-9 col-10-md">
@@ -151,7 +158,11 @@
                 let collectorId = document.querySelector('[deer-key="targetCollection"]').getAttribute("deer-source")
                 fetch("http://tinymatt.rerum.io/gloss/delete", {
                     method: "DELETE",
-                    body: collectorId
+                    body: collectorId,
+                    headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                    }
                 }).then(obj => {
                     location.href = "./named-glosses.html"
                 })

@@ -23,7 +23,7 @@ DEER.URLS = {
     BASE_ID: "http://store.rerum.io/v1",
     CREATE: "http://tinymatt.rerum.io/gloss/create",
     UPDATE: "http://tinymatt.rerum.io/gloss/update",
-    QUERY: "http://tinymatt.rerum.io/gloss/query",
+    QUERY: "http://tiny.rerum.io/app/query",
     OVERWRITE: "http://tinymatt.rerum.io/gloss/overwrite",
     SINCE: "http://store.rerum.io/v1/since"
 }

@@ -6,6 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/gloss.css">
+    <script src="/js/auth.js" type="module"></script>
 </head>
 
 <body class="container">
@@ -16,8 +17,13 @@
             <a href="./named-glosses.html">📑 Named Glosses</a>
             <a href="./ms.html" id="thisMS" class="is-hidden">📖 This Manuscript</a>
         </div>
+        <auth-button class="container">
+            <button is="auth-button">login</button>
+        </auth-button>
+
     </gm-header>
     <h1 class="text-primary"> Managing Glossing Matthew Manuscripts </h1>
+    <input is="auth-creator" type="hidden" deer-key="creator" />
     <button id="saveList" style="visibility: hidden;" class="button primary" role="button">Save List</button>
     <div class="row">
         <deer-view id="collectionList" deer-listing="http://store.rerum.io/v1/id/610ad6f1ffce846a83e70613"

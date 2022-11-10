@@ -5,6 +5,7 @@
     <title>Glossing Matthew</title>
     <link rel="stylesheet" href="css/gloss.css">
     <link href="favicon.ico" rel="icon" type="image/x-icon" />
+    <script src="/js/auth.js" type="module"></script>
 </head>
 
 <body class="container">
@@ -14,11 +15,15 @@
             <a href="./index.html">🏠</a>
             <a href="./manuscripts.html">📚 View Manuscripts</a>
             <a href="./named-glosses.html">📑 Named Glosses</a>
-
         </div>
+        <auth-button class="container">
+            <button is="auth-button">login</button>
+        </auth-button>
+
     </gm-header>
     <form id="manuscript" deer-type="manuscript" deer-context="http://purl.org/dc/terms">
         <input type="hidden" deer-key="targetCollection" value="Glossing-Matthew">
+        <input is="auth-creator" type="hidden" deer-key="creator" />
         <div class="row">
             <label class="col-3 col-2-md text-right">Label:</label>
             <input type="text" deer-key="title" placeholder="Label" class="col-9 col-10-md">
@@ -121,7 +126,11 @@
                 let collectorId = document.querySelector('[deer-key="targetCollection"]').getAttribute("deer-source")
                 fetch("http://tinymatt.rerum.io/gloss/delete", {
                     method: "DELETE",
-                    body: collectorId
+                    body: collectorId,
+                    headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                    }
                 }).then(obj => {
                     location.href = "./manuscripts.html"
                 })

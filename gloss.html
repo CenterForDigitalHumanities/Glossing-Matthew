@@ -5,6 +5,7 @@
     <title>Glossing Matthew</title>
     <link rel="stylesheet" href="css/gloss.css">
     <link href="favicon.ico" rel="icon" type="image/x-icon" />
+    <script src="/js/auth.js" type="module"></script>
 </head>
 
 <body class="container">
@@ -17,10 +18,15 @@
 
             <a href="./ms.html" id="thisMS">📖 This Manuscript</a>
         </div>
+        <auth-button class="container">
+            <button is="auth-button">login</button>
+        </auth-button>
+
     </gm-header>
     <div id="pageRanges"></div>
     <form id="folioRange" deer-type="Range" deer-motivation="bookmarking"
         deer-context="https://iiif.io/api/presentation/3/context.json">
+        <input is="auth-creator" type="hidden" deer-key="creator" />
         <input type="hidden" deer-key="partOf">
         <input type="hidden" deer-key="additionalType" value="Gloss">
         <div class="row">
@@ -199,7 +205,11 @@
                 if (id.length === 0) throw "new form"
                 fetch("http://tinymatt.rerum.io/gloss/delete", {
                     method: "DELETE",
-                    body: id
+                    body: id,
+                    headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                    }
                 }).then(obj => {
                     broadcast(event, "deer-updated", gloss)
                     setTimeout(() => location.hash = "", 2000)

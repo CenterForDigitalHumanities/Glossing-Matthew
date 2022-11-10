@@ -5,13 +5,18 @@
     <title>Glossing Matthew</title>
     <link rel="stylesheet" href="css/gloss.css">
     <link href="favicon.ico" rel="icon" type="image/x-icon" />
+    <script src="/js/auth.js" type="module"></script>
 </head>
 
 <body class="container">
     <gm-header>
         <img src="media/gm-logo.png" alt="logo">
+        <auth-button class="container">
+            <button is="auth-button">login</button>
+        </auth-button>
     </gm-header>
     <form id="msForm" deer-type="manuscript" deer-context="http://www.loc.gov/mods" class="row">
+        <input is="auth-creator" type="hidden" deer-key="creator" />
         <input type="text" deer-key="title" placeholder="Display Label" class="col">
         <input type="hidden" deer-key="targetCollection" value="Glossing-Matthew">
         <input type="submit" value="Add MS to Collection" class="col">

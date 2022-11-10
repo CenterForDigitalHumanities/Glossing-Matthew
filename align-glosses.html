@@ -5,6 +5,7 @@
     <title>Glossing Matthew</title>
     <link rel="stylesheet" href="css/gloss.css">
     <link href="favicon.ico" rel="icon" type="image/x-icon" />
+    <script src="/js/auth.js" type="module"></script>
 </head>
 
 <body class="container">
@@ -16,8 +17,13 @@
             <a href="./named-glosses.html">📑 Named Glosses</a>
             <a href="./ms.html" id="thisMS" class="is-hidden">📖 This Manuscript</a>
         </div>
+        <auth-button class="container">
+            <button is="auth-button">login</button>
+        </auth-button>
+
     </gm-header>
     <h3 id="glossTitle" class="deer-view send-id" deer-template="label">Gloss Alignment</h3>
+    <input is="auth-creator" type="hidden" deer-key="creator" />
 
     <deer-view deer-id="" class="send-id" deer-template="pageLinks"></deer-view>
 
