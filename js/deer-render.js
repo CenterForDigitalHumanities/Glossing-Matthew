@@ -638,7 +638,7 @@ DEER.TEMPLATES.lines_new = function (obj, options = {}) {
                         locations[location].push(line.getAttribute("title"))    
                     }
                 })
-                let allMarginPromises
+                let allMarginPromises=[]
                 for(let margin in locations){
                     const marginAnno = {
                         "@id": document.querySelector("div.page").getAttribute(`data-${margin}`),
@@ -716,9 +716,6 @@ DEER.TEMPLATES.lines_new = function (obj, options = {}) {
                     return res.json()
                 }).then(annotations => {
                     //Now separate them out by margin
-                    // if(annotations.length === 0){
-                    //     annotations.push({"@id":"NONE",body:{location:"none"}})
-                    // }
                     let existingMarginAnnos = {
                         "ulm" : annotations.filter(anno => anno.body.location === "ulm")?.[0]?.["@id"] ?? false,
                         "urm" : annotations.filter(anno => anno.body.location === "urm")?.[0]?.["@id"] ?? false,
@@ -732,7 +729,7 @@ DEER.TEMPLATES.lines_new = function (obj, options = {}) {
                     //Now for each of those that are false, we need to make the Annotation that will represent it
                     for(let margin in existingMarginAnnos){
                         if(existingMarginAnnos[margin]){
-                            drawAssignment(margin, annotations.filter(anno => anno["@id"] = existingMarginAnnos[margin]))
+                            drawAssignment(margin, annotations.filter(anno => anno["@id"] === existingMarginAnnos[margin])[0])
                             pageElement.setAttribute(`data-${margin}`, existingMarginAnnos[margin])
                         }
                         else{
@@ -745,27 +742,27 @@ DEER.TEMPLATES.lines_new = function (obj, options = {}) {
                                 motivation: "classifying",
                                 "locationing" : true
                             }
-                            console.log("I would create")
+                            console.log("I will create")
                             console.log(locationAnnotation)
-                            // fetch(DEER.URLS.CREATE, {
-                            //     method: 'POST',
-                            //     mode: 'cors',
-                            //     headers: {
-                            //         'Content-Type': 'application/ld+json; charset=utf-8',
-                            //         "Authorization": `Bearer ${window.GOG_USER.authorization}`
-                            //     },
-                            //     body: JSON.stringify(locationAnnotation)
-                            // }).then(res => {
-                            //     if (!res.ok) {
-                            //         throw Error(res.statusText)
-                            //     }
-                            //     return res.json()
-                            // }).then(loc => {
-                            //     const ev = new CustomEvent("Marginalia locations loaded")
-                            //     globalFeedbackBlip(ev, `Marginalia locations loaded`, true)
-                            //     pageElement.setAttribute(`data-${margin}`, loc.new_obj_state['@id'])
-                            // })
-                            // .catch(err => console.error(err))    
+                            fetch(DEER.URLS.CREATE, {
+                                method: 'POST',
+                                mode: 'cors',
+                                headers: {
+                                    'Content-Type': 'application/ld+json; charset=utf-8',
+                                    "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                                },
+                                body: JSON.stringify(locationAnnotation)
+                            }).then(res => {
+                                if (!res.ok) {
+                                    throw Error(res.statusText)
+                                }
+                                return res.json()
+                            }).then(loc => {
+                                const ev = new CustomEvent("Marginalia locations loaded")
+                                globalFeedbackBlip(ev, `Marginalia locations loaded`, true)
+                                pageElement.setAttribute(`data-${margin}`, loc.new_obj_state['@id'])
+                            })
+                            .catch(err => console.error(err))    
                         }
                     }
                 })
@@ -774,11 +771,15 @@ DEER.TEMPLATES.lines_new = function (obj, options = {}) {
                     globalFeedbackBlip(ev, `Please reload. This crashed. ${err}`, false)
                 })
 
-                function drawAssignment(glossLines) {
-                    for (const line in glossLines) {
+                //This now accepts a margin anno
+                //The targets are each line id
+                //The body is {location:"margin"}
+                //whichMargin is "margin" ready for you.
+                function drawAssignment(whichMargin, marginAnno) {
+                    for (const line of marginAnno.target) {
                         const el = document.querySelector(`line[title="${line}"]`)
                         if (!el) { continue }
-                        const locatedClass = glossLines[line] ? `located ${glossLines[line]}` : ""
+                        const locatedClass = `located ${whichMargin}`
                         el.className = locatedClass
                     }
                 }
