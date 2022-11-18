@@ -645,6 +645,7 @@ DEER.TEMPLATES.lines_new = function (obj, options = {}) {
                         "@type": "Annotation",
                         "@context": "http://www.w3.org/ns/anno.jsonld",
                         target: locations[margin],
+                        forCanvas: c["@id"],
                         body: { "location": margin},
                         motivation: "classifying",
                         "locationing": true
@@ -693,86 +694,14 @@ DEER.TEMPLATES.lines_new = function (obj, options = {}) {
                     UTILS.broadcast(event, "globalFeedbackFinished", globalFeedback, { message: message })
                 }, 3000)
             }
-            function highlightLocations_new() {
-                const pageElement = document.querySelector("div.page")
-                const historyWildcard = { $exists: true, $type: 'array', $eq: [] }
-
-                const query = {
-                    target: c['@id'],
-                    motivation: "classifying",
-                    'body.locations': { $exists: true },
-                    '__rerum.history.next': historyWildcard
-                }
-
-                fetch(DEER.URLS.QUERY, {
-                    method: 'POST',
-                    mode: 'cors',
-                    body: JSON.stringify(query)
-                }).then(res => {
-                    if (!res.ok) {
-                        throw Error(res.statusText)
-                    }
-                    return res.json()
-                }).then(annotations => {
-                    if (annotations.length === 0) {
-                        // no results
-                        const locationAnnotation = {
-                            "@type": "Annotation",
-                            "@context": "http://www.w3.org/ns/anno.jsonld",
-                            target: c['@id'],
-                            body: { locations: {} },
-                            motivation: "classifying",
-                            "locationing" : true
-                        }
-
-                        fetch(DEER.URLS.CREATE, {
-                            method: 'POST',
-                            mode: 'cors',
-                            headers: {
-                                'Content-Type': 'application/ld+json; charset=utf-8',
-                                "Authorization": `Bearer ${window.GOG_USER.authorization}`
-                            },
-                            body: JSON.stringify(locationAnnotation)
-                        }).then(res => {
-                            if (!res.ok) {
-                                throw Error(res.statusText)
-                            }
-                            return res.json()
-                        }).then(loc => {
-                            const ev = new CustomEvent("Marginalia locations loaded")
-                            globalFeedbackBlip(ev, `Marginalia locations loaded`, true)
-                            pageElement.setAttribute("data-marginalia", loc.new_obj_state['@id'])
-                        })
-                            .catch(err => console.error(err))
-
-                    } else {
-                        drawAssignment(annotations[0].body.locations)
-                        pageElement.setAttribute("data-marginalia", annotations[0]['@id'])
-                    }
-                })
-                    .catch(err => {
-                        const ev = new CustomEvent("Location annotation query")
-                        globalFeedbackBlip(ev, `Please reload. This crashed. ${err}`, false)
-                    })
-
-                function drawAssignment(glossLines) {
-                    for (const line in glossLines) {
-                        const el = document.querySelector(`line[title="${line}"]`)
-                        if (!el) { continue }
-                        const locatedClass = glossLines[line] ? `located ${glossLines[line]}` : ""
-                        el.className = locatedClass
-                    }
-                }
-            }
-
             function highlightLocations() {
                 const pageElement = document.querySelector("div.page")
                 const historyWildcard = { $exists: true, $type: 'array', $eq: [] }
 
                 const query = {
-                    target: c['@id'],
+                    forCanvas: c['@id'],
                     motivation: "classifying",
-                    'body.locations': { $exists: true },
+                    'body.location': { $exists: true },
                     '__rerum.history.next': historyWildcard
                 }
 
@@ -786,46 +715,64 @@ DEER.TEMPLATES.lines_new = function (obj, options = {}) {
                     }
                     return res.json()
                 }).then(annotations => {
-                    if (annotations.length === 0) {
-                        // no results
-                        const locationAnnotation = {
-                            "@type": "Annotation",
-                            "@context": "http://www.w3.org/ns/anno.jsonld",
-                            target: c['@id'],
-                            body: { locations: {} },
-                            motivation: "classifying",
-                            "locationing" : true
+                    //Now separate them out by margin
+                    // if(annotations.length === 0){
+                    //     annotations.push({"@id":"NONE",body:{location:"none"}})
+                    // }
+                    let existingMarginAnnos = {
+                        "ulm" : annotations.filter(anno => anno.body.location === "ulm")?.[0]?.["@id"] ?? false,
+                        "urm" : annotations.filter(anno => anno.body.location === "urm")?.[0]?.["@id"] ?? false,
+                        "um" :  annotations.filter(anno => anno.body.location === "um")?.[0]?.["@id"] ?? false,
+                        "llm" : annotations.filter(anno => anno.body.location === "llm")?.[0]?.["@id"] ?? false,
+                        "lm" :  annotations.filter(anno => anno.body.location === "lm")?.[0]?.["@id"] ?? false,
+                        "lrm" : annotations.filter(anno => anno.body.location === "lrm")?.[0]?.["@id"] ?? false,
+                        "ti" :  annotations.filter(anno => anno.body.location === "ti")?.[0]?.["@id"] ?? false,
+                        "li" :  annotations.filter(anno => anno.body.location === "li")?.[0]?.["@id"] ?? false,
+                    }
+                    //Now for each of those that are false, we need to make the Annotation that will represent it
+                    for(let margin in existingMarginAnnos){
+                        if(existingMarginAnnos[margin]){
+                            drawAssignment(margin, annotations.filter(anno => anno["@id"] = existingMarginAnnos[margin]))
+                            pageElement.setAttribute(`data-${margin}`, existingMarginAnnos[margin])
                         }
-
-                        fetch(DEER.URLS.CREATE, {
-                            method: 'POST',
-                            mode: 'cors',
-                            headers: {
-                                'Content-Type': 'application/ld+json; charset=utf-8',
-                                "Authorization": `Bearer ${window.GOG_USER.authorization}`
-                            },
-                            body: JSON.stringify(locationAnnotation)
-                        }).then(res => {
-                            if (!res.ok) {
-                                throw Error(res.statusText)
+                        else{
+                            const locationAnnotation = {
+                                "@type": "Annotation",
+                                "@context": "http://www.w3.org/ns/anno.jsonld",
+                                forCanvas: c['@id'],
+                                target: [],
+                                body: { location: margin },
+                                motivation: "classifying",
+                                "locationing" : true
                             }
-                            return res.json()
-                        }).then(loc => {
-                            const ev = new CustomEvent("Marginalia locations loaded")
-                            globalFeedbackBlip(ev, `Marginalia locations loaded`, true)
-                            pageElement.setAttribute("data-marginalia", loc.new_obj_state['@id'])
-                        })
-                            .catch(err => console.error(err))
-
-                    } else {
-                        drawAssignment(annotations[0].body.locations)
-                        pageElement.setAttribute("data-marginalia", annotations[0]['@id'])
+                            console.log("I would create")
+                            console.log(locationAnnotation)
+                            // fetch(DEER.URLS.CREATE, {
+                            //     method: 'POST',
+                            //     mode: 'cors',
+                            //     headers: {
+                            //         'Content-Type': 'application/ld+json; charset=utf-8',
+                            //         "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                            //     },
+                            //     body: JSON.stringify(locationAnnotation)
+                            // }).then(res => {
+                            //     if (!res.ok) {
+                            //         throw Error(res.statusText)
+                            //     }
+                            //     return res.json()
+                            // }).then(loc => {
+                            //     const ev = new CustomEvent("Marginalia locations loaded")
+                            //     globalFeedbackBlip(ev, `Marginalia locations loaded`, true)
+                            //     pageElement.setAttribute(`data-${margin}`, loc.new_obj_state['@id'])
+                            // })
+                            // .catch(err => console.error(err))    
+                        }
                     }
                 })
-                    .catch(err => {
-                        const ev = new CustomEvent("Location annotation query")
-                        globalFeedbackBlip(ev, `Please reload. This crashed. ${err}`, false)
-                    })
+                .catch(err => {
+                    const ev = new CustomEvent("Location annotation query")
+                    globalFeedbackBlip(ev, `Please reload. This crashed. ${err}`, false)
+                })
 
                 function drawAssignment(glossLines) {
                     for (const line in glossLines) {
