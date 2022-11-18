@@ -20,12 +20,10 @@
         <auth-button class="container">
             <button is="auth-button">login</button>
         </auth-button>
-
     </gm-header>
+
     <h3 id="glossTitle" class="deer-view send-id" deer-template="label">Gloss Alignment</h3>
     <input is="auth-creator" type="hidden" deer-key="creator" />
-
-    <deer-view deer-id="" class="send-id" deer-template="pageLinks"></deer-view>
 
     <div class="row">
         <deer-view id="glossNumBtns" class="col-6" deer-collection="Glossing-Matthew-Named-Glosses"
@@ -36,8 +34,9 @@
 
     <deer-view id="previewTranscription" deer-template="folioTranscription"></deer-view>
 
-    <pre
-        class="card bg-light is-hidden"><deer-view id="frPreview" deer-template="entity">current state</deer-view></pre>
+    <pre class="card bg-light is-hidden">
+        <deer-view id="frPreview" deer-template="entity">current state</deer-view>
+    </pre>
 
     <gm-footer>
         <a href="./index.html">🏠</a>

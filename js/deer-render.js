@@ -494,6 +494,353 @@ DEER.TEMPLATES.osd = function (obj, options = {}) {
     }
 }
 
+DEER.TEMPLATES.lines_new = function (obj, options = {}) {
+    let c = obj.sequences[0].canvases[options.index ?? 0]
+    return {
+        html: `
+        <div class="page">
+            <h3>${c.label}</h3>
+            <div class="row">
+            <a class="col tag gloss-location ulm" data-change="upper left margin">🡤 margin</a>
+                <a class="col tag gloss-location um" data-change="upper margin">🡡 margin</a>
+                <a class="col tag gloss-location urm" data-change="upper right margin">🡥 margin</a>
+            </div>
+            <div class="row">
+                <a class="col tag gloss-location llm" data-change="lower left margin">🡧 margin</a>
+                <a class="col tag gloss-location lm" data-change="lower margin">🡣 margin</a>
+                <a class="col tag gloss-location lrm" data-change="lower right margin">🡦 margin</a>
+            </div>
+            <div class="row">
+                <a class="col tag gloss-location ti" data-change="top intralinear">⇞ intralinear</a>
+                <a class="col tag gloss-location li" data-change="lower intralinear">⇟ intralinear</a>
+            </div>
+            <div class="col">
+                <script>
+                    function batchLine(change) {
+                        [...document.getElementsByTagName("line")].forEach(l=>{l.classList[change]("selected");l.classList.remove("just")})
+                    }
+                </script>
+                <a class="tag is-small" data-change="add">Select All</a>
+                <a class="tag is-small" data-change="remove">Deselect All</a>
+                <a class="tag is-small" data-change="toggle">Invert All</a>
+            </div>
+            <div class="col">
+                <button id="saveBtn" role="button" style="visibility:hidden;">Save Changes</button>
+            </div>
+                ${c.otherContent[0].resources.reduce((aa, bb, i) => aa += `
+                <line title="${bb['@id'].split('/').pop()}" index="${i}">${bb.resource["cnt:chars"].length ? bb.resource["cnt:chars"] : "[ empty line ]"}<i class="unassign tag is-small bg-light text-dark">⭯</i></line>
+                `, ``)}
+        </div>
+        `,
+        then: elem => {
+            const POSITIONS = {
+                ulm: "upper left margin",
+                um: "upper margin",
+                urm: "upper right margin",
+                llm: "lower left margin",
+                lm: "lower margin",
+                lrm: "lower right margin",
+                ti: "top intralinear",
+                li: "lower intralinear"
+            }
+            const allLines = elem.querySelectorAll("line")
+            for (const l of allLines) { l.addEventListener("click", selectLine) }
+            function selectLine(event) {
+                const lastClick = document.querySelector("line.just")
+                const line = event.target.closest("line")
+
+                if (lastClick && event.shiftKey) {
+                    // band-select
+                    const change = lastClick.classList.contains("selected") // change is constant
+                        ? "add"
+                        : "remove"
+                    const lookNext = parseInt(lastClick.getAttribute("index")) < parseInt(line.getAttribute("index"))
+                        ? "nextElementSibling"
+                        : "previousElementSibling"
+                    let changeLine = lastClick
+                    do {
+                        changeLine = changeLine[lookNext]
+                        if (!changeLine.classList.contains("located")) {
+                            changeLine.classList[change]("selected")
+                        }
+                    } while (changeLine !== line)
+                } else if (!line.classList.contains("located")) {
+                    line.classList.toggle("selected")
+                }
+
+                if (lastClick) { lastClick.classList.remove("just") }
+
+                if (!line.classList.contains("located")) {
+                    line.classList.add("just")
+                }
+                saveBtn.style.visibility = "visible"
+            }
+
+            const controls = elem.querySelectorAll("a.tag:not(.gloss-location)")
+            for (const b of controls) {
+                b.addEventListener("click", e => {
+                    const change = e.target.getAttribute("data-change")
+                    Array.from(allLines).filter(el => !el.classList.contains("located")).forEach(l => { l.classList[change]("selected"); l.classList.remove("just") })
+                })
+            }
+            const locations = elem.querySelectorAll("a.gloss-location")
+            for (const l of locations) {
+                l.addEventListener("click", e => {
+                    const assignment = e.target.getAttribute("data-change")
+                    const selected = elem.querySelectorAll(".selected")
+                    for (const s of selected) {
+                        s.classList.add("located", assignment.split(/\s/).reduce((response, word) => response += word.slice(0, 1), ''))
+                        s.classList.remove("just", "selected")
+                    }
+                })
+            }
+            const classes = Object.keys(POSITIONS)
+            const unassignmentButtons = elem.querySelectorAll("i.unassign")
+            for (const r of unassignmentButtons) {
+                r.addEventListener("click", e => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    const forLine = e.target.closest("line")
+                    if (forLine === null) { return false }
+                    const location = Array.from(forLine.classList).filter(val => classes.includes(val))?.[0]
+                    let thisLine = forLine
+                    while (thisLine?.classList.contains(location)) {
+                        thisLine.classList.remove(location, "located", "selected", "just")
+                        thisLine = thisLine.nextElementSibling
+                    }
+                    saveBtn.style.visibility = "visible"
+                })
+            }
+            const selected = elem.querySelectorAll(".selected")
+            for (const s of selected) {
+                s.classList.add("located", assignment.split(/\s/).reduce((response, word) => response += word.slice(0, 1), ''))
+                s.classList.remove("just", "selected")
+            }
+            saveBtn.addEventListener("click", saveLocations)
+            /**
+             * Each Marginalia option has its own Annotation which collects lines together for that Margin.
+             * This way, the lines can be the target of the marginalia Annotation.
+             */ 
+            function saveLocations() {
+                let locations = {
+                    "ulm" : [],
+                    "urm" : [],
+                    "um" :  [],
+                    "llm" : [],
+                    "lm" :  [],
+                    "lrm" : [],
+                    "ti" :  [],
+                    "li" :  []
+                }
+                allLines.forEach(line => {
+                    const location = Array.from(line.classList).filter(val => classes.includes(val))?.[0]
+                    if(location){
+                        locations[location].push(line.getAttribute("title"))    
+                    }
+                })
+                let allMarginPromises
+                for(let margin in locations){
+                    const marginAnno = {
+                        "@id": document.querySelector("div.page").getAttribute(`data-${margin}`),
+                        "@type": "Annotation",
+                        "@context": "http://www.w3.org/ns/anno.jsonld",
+                        target: locations[margin],
+                        body: { "location": margin},
+                        motivation: "classifying",
+                        "locationing": true
+                    }
+                    const marginPromise = fetch(DEER.URLS.OVERWRITE, {
+                            method: 'PUT',
+                            mode: 'cors',
+                            body: JSON.stringify(marginAnno),
+                            headers: {
+                            "Content-Type": "application/json; charset=utf-8",
+                            "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                            }
+                        }).then(res => {
+                            if (!res.ok) {
+                                throw Error(res.statusText)
+                            }
+                            return res.json()
+                        }).catch(err => {
+                            return err
+                        })
+                    allMarginPromises.push(marginAnno)
+                }
+                
+                const ev = new CustomEvent("Locations Update")
+                Promise.all(allMarginPromises)
+                .then(results => {
+                    globalFeedbackBlip(ev, `Locations updated successfully.`, true)
+                    saveBtn.style.visibility = "hidden"
+                })
+                .catch(err => {
+                    globalFeedbackBlip(ev, `Locations update failed.`, false)
+                })
+            }
+            function globalFeedbackBlip(event, message, success) {
+                globalFeedback.innerText = message
+                globalFeedback.classList.add("show")
+                if (success) {
+                    globalFeedback.classList.add("bg-success")
+                } else {
+                    globalFeedback.classList.add("bg-error")
+                }
+                setTimeout(function () {
+                    globalFeedback.classList.remove("show")
+                    globalFeedback.classList.remove("bg-error")
+                    // backup to page before the form
+                    UTILS.broadcast(event, "globalFeedbackFinished", globalFeedback, { message: message })
+                }, 3000)
+            }
+            function highlightLocations_new() {
+                const pageElement = document.querySelector("div.page")
+                const historyWildcard = { $exists: true, $type: 'array', $eq: [] }
+
+                const query = {
+                    target: c['@id'],
+                    motivation: "classifying",
+                    'body.locations': { $exists: true },
+                    '__rerum.history.next': historyWildcard
+                }
+
+                fetch(DEER.URLS.QUERY, {
+                    method: 'POST',
+                    mode: 'cors',
+                    body: JSON.stringify(query)
+                }).then(res => {
+                    if (!res.ok) {
+                        throw Error(res.statusText)
+                    }
+                    return res.json()
+                }).then(annotations => {
+                    if (annotations.length === 0) {
+                        // no results
+                        const locationAnnotation = {
+                            "@type": "Annotation",
+                            "@context": "http://www.w3.org/ns/anno.jsonld",
+                            target: c['@id'],
+                            body: { locations: {} },
+                            motivation: "classifying",
+                            "locationing" : true
+                        }
+
+                        fetch(DEER.URLS.CREATE, {
+                            method: 'POST',
+                            mode: 'cors',
+                            headers: {
+                                'Content-Type': 'application/ld+json; charset=utf-8',
+                                "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                            },
+                            body: JSON.stringify(locationAnnotation)
+                        }).then(res => {
+                            if (!res.ok) {
+                                throw Error(res.statusText)
+                            }
+                            return res.json()
+                        }).then(loc => {
+                            const ev = new CustomEvent("Marginalia locations loaded")
+                            globalFeedbackBlip(ev, `Marginalia locations loaded`, true)
+                            pageElement.setAttribute("data-marginalia", loc.new_obj_state['@id'])
+                        })
+                            .catch(err => console.error(err))
+
+                    } else {
+                        drawAssignment(annotations[0].body.locations)
+                        pageElement.setAttribute("data-marginalia", annotations[0]['@id'])
+                    }
+                })
+                    .catch(err => {
+                        const ev = new CustomEvent("Location annotation query")
+                        globalFeedbackBlip(ev, `Please reload. This crashed. ${err}`, false)
+                    })
+
+                function drawAssignment(glossLines) {
+                    for (const line in glossLines) {
+                        const el = document.querySelector(`line[title="${line}"]`)
+                        if (!el) { continue }
+                        const locatedClass = glossLines[line] ? `located ${glossLines[line]}` : ""
+                        el.className = locatedClass
+                    }
+                }
+            }
+
+            function highlightLocations() {
+                const pageElement = document.querySelector("div.page")
+                const historyWildcard = { $exists: true, $type: 'array', $eq: [] }
+
+                const query = {
+                    target: c['@id'],
+                    motivation: "classifying",
+                    'body.locations': { $exists: true },
+                    '__rerum.history.next': historyWildcard
+                }
+
+                fetch(DEER.URLS.QUERY, {
+                    method: 'POST',
+                    mode: 'cors',
+                    body: JSON.stringify(query)
+                }).then(res => {
+                    if (!res.ok) {
+                        throw Error(res.statusText)
+                    }
+                    return res.json()
+                }).then(annotations => {
+                    if (annotations.length === 0) {
+                        // no results
+                        const locationAnnotation = {
+                            "@type": "Annotation",
+                            "@context": "http://www.w3.org/ns/anno.jsonld",
+                            target: c['@id'],
+                            body: { locations: {} },
+                            motivation: "classifying",
+                            "locationing" : true
+                        }
+
+                        fetch(DEER.URLS.CREATE, {
+                            method: 'POST',
+                            mode: 'cors',
+                            headers: {
+                                'Content-Type': 'application/ld+json; charset=utf-8',
+                                "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                            },
+                            body: JSON.stringify(locationAnnotation)
+                        }).then(res => {
+                            if (!res.ok) {
+                                throw Error(res.statusText)
+                            }
+                            return res.json()
+                        }).then(loc => {
+                            const ev = new CustomEvent("Marginalia locations loaded")
+                            globalFeedbackBlip(ev, `Marginalia locations loaded`, true)
+                            pageElement.setAttribute("data-marginalia", loc.new_obj_state['@id'])
+                        })
+                            .catch(err => console.error(err))
+
+                    } else {
+                        drawAssignment(annotations[0].body.locations)
+                        pageElement.setAttribute("data-marginalia", annotations[0]['@id'])
+                    }
+                })
+                    .catch(err => {
+                        const ev = new CustomEvent("Location annotation query")
+                        globalFeedbackBlip(ev, `Please reload. This crashed. ${err}`, false)
+                    })
+
+                function drawAssignment(glossLines) {
+                    for (const line in glossLines) {
+                        const el = document.querySelector(`line[title="${line}"]`)
+                        if (!el) { continue }
+                        const locatedClass = glossLines[line] ? `located ${glossLines[line]}` : ""
+                        el.className = locatedClass
+                    }
+                }
+            }
+            highlightLocations()
+        }
+    }
+}
+
 DEER.TEMPLATES.lines = function (obj, options = {}) {
     let c = obj.sequences[0].canvases[options.index ?? 0]
     return {
