@@ -182,7 +182,21 @@ DEER.TEMPLATES.thumbs = function (obj, options = {}) {
 }
 
 DEER.TEMPLATES.pageLinks = function (obj, options = {}) {
-    return obj.sequences[0].canvases.reduce((a, b, i) => a += `<a class="button" href="?page=${i + 1}#${obj["@id"]}">${b.label}</a>`, ``)
+    let params = (new URL(document.location)).searchParams
+    let highlight = parseInt(params.get("page")) || 1
+    return obj.sequences[0].canvases.reduce((a, b, i) => a += `<a class="button ${(highlight === i+1) ? "primary" : ""}" href="?page=${i + 1}#${obj["@id"]}">${b.label}</a>`, ``)
+}
+
+DEER.TEMPLATES.pageTurn = function (obj, options = {}) {
+    let params = (new URL(document.location)).searchParams
+    let page = parseInt(params.get("page")) || 1
+    let numPages = obj.sequences[0].canvases.length
+    let nextpage = (page === numPages) ? 0 : page + 1
+    let prevpage = (page === 1) ? 0 : page - 1
+    return`
+        <a class="button secondary ${(page === 1) ? "is-hidden" : ""}"  href="?page=${prevpage}#${obj["@id"]}">Previous Page</a>
+        <a class="button secondary ${(page === numPages) ? "is-hidden" : ""}" href="?page=${nextpage}#${obj["@id"]}">Next Page</a>
+    `
 }
 
 DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
@@ -742,8 +756,6 @@ DEER.TEMPLATES.lines_new = function (obj, options = {}) {
                                 motivation: "classifying",
                                 "locationing" : true
                             }
-                            console.log("I will create")
-                            console.log(locationAnnotation)
                             fetch(DEER.URLS.CREATE, {
                                 method: 'POST',
                                 mode: 'cors',
