@@ -184,7 +184,9 @@ DEER.TEMPLATES.thumbs = function (obj, options = {}) {
 DEER.TEMPLATES.pageLinks = function (obj, options = {}) {
     let params = (new URL(document.location)).searchParams
     let highlight = parseInt(params.get("page")) || 1
-    return obj.sequences[0].canvases.reduce((a, b, i) => a += `<a class="button ${(highlight === i+1) ? "primary" : ""}" href="?page=${i + 1}#${obj["@id"]}">${b.label}</a>`, ``)
+    const optionelems = obj.sequences[0].canvases.reduce((a, b, i) => a += `<option class="button" value="${i+1}" ${(highlight === i+1) ? "selected" : ""}>${b.label}</option>`, ``)
+    const select = `<select onchange="document.location=document.location.pathname+'?page='+event.target.value+'#${obj["@id"]}'">${optionelems}</select>`
+    return select
 }
 
 DEER.TEMPLATES.pageTurn = function (obj, options = {}) {
@@ -195,7 +197,7 @@ DEER.TEMPLATES.pageTurn = function (obj, options = {}) {
     let prevpage = (page === 1) ? 0 : page - 1
     return`
         <a class="button secondary ${(page === 1) ? "is-hidden" : ""}"  href="?page=${prevpage}#${obj["@id"]}">Previous Page</a>
-        <a class="button secondary ${(page === numPages) ? "is-hidden" : ""}" href="?page=${nextpage}#${obj["@id"]}">Next Page</a>
+        <a class="button secondary pull-right ${(page === numPages) ? "is-hidden" : ""}" href="?page=${nextpage}#${obj["@id"]}">Next Page</a>
     `
 }
 
