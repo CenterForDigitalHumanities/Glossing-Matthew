@@ -49,6 +49,7 @@ class AuthButton extends HTMLButtonElement {
         this.onclick = logout
         this.login = login
         this.logout = logout
+        this.style.marginTop = "9px"
     }
 
     connectedCallback() {
