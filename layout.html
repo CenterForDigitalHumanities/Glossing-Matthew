@@ -15,14 +15,21 @@
             <a href="./named-glosses.html">✏️ Named Glosses</a>
             <a href="./manuscripts.html">📚 View Manuscripts</a>
             <a href="./ms.html" id="thisMS" class="is-hidden">📖 This Manuscript</a>
+            <auth-button class="container">
+                <button is="auth-button">login</button>
+            </auth-button>
         </div>
-        <auth-button class="container">
-            <button is="auth-button">login</button>
-        </auth-button>
-
     </gm-header>
     <h3 id="glossTitle" class="deer-view send-id" deer-id="" deer-template="label">Layout Editor</h3>
     <input is="auth-creator" type="hidden" deer-key="creator" />
+
+    <div class="row">
+        <deer-view id="pageLinks" deer-id="" class="send-id col" deer-template="pageLinks"></deer-view>
+    </div>
+
+    <div class="row">
+        <deer-view id="pageTurn" deer-id="" class="send-id col" deer-template="pageTurn"></deer-view>
+    </div>
 
     <div class="row">
         <deer-view id="folioLayout" deer-id="" class="send-id col-6" deer-template="lines_new"></deer-view>
