@@ -427,6 +427,9 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 fetch(DEER.URLS.QUERY, {
                     method: 'POST',
                     mode: 'cors',
+                    headers:{
+                        "Content-Type" : "application/json;charset=utf-8"
+                    },
                     body: JSON.stringify(query)
                 }).then(res => {
                     if (!res.ok) {
@@ -708,6 +711,9 @@ DEER.TEMPLATES.lines_new = function (obj, options = {}) {
                 fetch(DEER.URLS.QUERY, {
                     method: 'POST',
                     mode: 'cors',
+                    headers:{
+                        "Content-Type" : "application/json;charset=utf-8"
+                    },
                     body: JSON.stringify(query)
                 }).then(res => {
                     if (!res.ok) {
@@ -986,6 +992,9 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 fetch(DEER.URLS.QUERY, {
                     method: 'POST',
                     mode: 'cors',
+                    headers:{
+                        "Content-Type" : "application/json;charset=utf-8"
+                    },
                     body: JSON.stringify(query)
                 }).then(res => {
                     if (!res.ok) {
@@ -1276,6 +1285,9 @@ DEER.TEMPLATES.pageRanges = function (obj, options = {}) {
             fetch(DEER.URLS.QUERY, {
                 method: "POST",
                 mode: "cors",
+                headers:{
+                    "Content-Type" : "application/json;charset=utf-8"
+                },
                 body: JSON.stringify(queryObj)
             })
                 .then(response => response.json())
