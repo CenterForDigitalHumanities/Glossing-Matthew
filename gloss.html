@@ -142,7 +142,7 @@
             document.querySelector("[deer-key='partOf']").setAttribute("value", msid)
             document.querySelector("input[deer-key='tpen://base-project']").addEventListener('input', e => {
                 copyLink.setAttribute("href", "//t-pen.org/TPEN/index.jsp?makeCopy=true&projectID=" + e.target.value)
-                document.querySelector("a[deer-key='tpen://base-project']").setAttribute("href", "https://t-pen.org/TPEN/project.jsp?projectID=" + e.target.value)
+                document.querySelector("a[deer-key='tpen://base-project']").setAttribute("href", "//t-pen.org/TPEN/project.jsp?projectID=" + e.target.value)
             })
             const glossProjectInput = document.querySelector("input[deer-key='tpenProject']")
             if (!glossProjectInput.value) {
@@ -164,7 +164,7 @@
                 } catch (err) {
                     manifest = event.detail["tpen://base-project"].value
                 }
-                manifest = isNaN(manifest) ? manifest : "https://t-pen.org/TPEN/manifest/" + manifest
+                manifest = isNaN(manifest) ? manifest : "//t-pen.org/TPEN/manifest/" + manifest
                 if (!manifest) { return }
                 fetch(manifest).then(response => response.json()).then(m => {
                     let canvases = []
