@@ -20,12 +20,12 @@ DEER.TEMPLATES.cat = (obj) => `<h5>${obj.name}</h5><img src="https://placekitten
 
 // sandbox repository URLS
 DEER.URLS = {
-    BASE_ID: "//store.rerum.io/v1/id",
+    BASE_ID: "//store.rerum.io/v1",
     CREATE: "//tinymatt.rerum.io/gloss/create",
     UPDATE: "//tinymatt.rerum.io/gloss/update",
     QUERY: "//tinymatt.rerum.io/gloss/query",
     OVERWRITE: "//tinymatt.rerum.io/gloss/overwrite",
-    SINCE: "//store.rerum.io/v1/id/since"
+    SINCE: "//store.rerum.io/v1/since"
 }
 // Render is probably needed by all items, but can be removed.
 // CDN at https://centerfordigitalhumanities.github.io/deer/releases/
