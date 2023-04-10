@@ -122,6 +122,7 @@ export default {
             return entity
         }
         let getVal = UTILS.getValue
+        findId = findId.replace(/^https?:/,location.protocol) // avoid mixed content
         return fetch(findId).then(response => response.json())
             .then(obj => UTILS.findByTargetId(findId)
                 .then(function (annos) {
