@@ -96,13 +96,13 @@
             manuscript.setAttribute("deer-id", msid)
             thumbroll.setAttribute("deer-id", msid)
             newGloss.setAttribute("href", "gloss.html?partOf=" + msid + "#")
-            fetch("http://tinymatt.rerum.io/gloss/query", {
+            fetch("//tinymatt.rerum.io/gloss/query", {
                 method: "POST",
                 body: JSON.stringify({
                     "body.partOf.value": msid
                 })
             }).then(r => r.json())
-                .then(annotations => Promise.all(annotations.map(anno => fetch(anno.target).then(res => res.json()))))
+                .then(annotations => Promise.all(annotations.map(anno => fetch(anno.target.replace(/^https?:/,location.protocol)).then(res => res.json()))))
                 .then(matches => {
                     var html = ``
                     matches.filter(a => a.__deleted === undefined).map(gloss => {
@@ -118,13 +118,13 @@
             broadcast(undefined, "deer-view", document, { set: [pageRanges] })
         }
 
-        document.querySelector("input[deer-key='tpen://base-project']").addEventListener('input', e => document.querySelector("a[deer-key='tpen://base-project']").setAttribute("href", "http://t-pen.org/TPEN/project.jsp?projectID=" + e.target.value))
+        document.querySelector("input[deer-key='tpen://base-project']").addEventListener('input', e => document.querySelector("a[deer-key='tpen://base-project']").setAttribute("href", "//t-pen.org/TPEN/project.jsp?projectID=" + e.target.value))
 
         function deleteThis(event) {
             event.preventDefault()
             if (confirm("Really remove this manuscript?\n(Cannot be undone)")) {
                 let collectorId = document.querySelector('[deer-key="targetCollection"]').getAttribute("deer-source")
-                fetch("http://tinymatt.rerum.io/gloss/delete", {
+                fetch("//tinymatt.rerum.io/gloss/delete", {
                     method: "DELETE",
                     body: collectorId,
                     headers: {

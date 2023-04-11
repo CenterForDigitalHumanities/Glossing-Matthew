@@ -16,16 +16,16 @@ import { default as DEER } from './deer-config.js'
 // Overwrite or add certain values to the configuration to customize.
 
 // new template
-DEER.TEMPLATES.cat = (obj) => `<h5>${obj.name}</h5><img src="http://placekitten.com/300/150" style="width:100%;">`
+DEER.TEMPLATES.cat = (obj) => `<h5>${obj.name}</h5><img src="https://placekitten.com/300/150" style="width:100%;">`
 
 // sandbox repository URLS
 DEER.URLS = {
-    BASE_ID: "http://store.rerum.io/v1",
-    CREATE: "http://tinymatt.rerum.io/gloss/create",
-    UPDATE: "http://tinymatt.rerum.io/gloss/update",
-    QUERY: "http://tinymatt.rerum.io/gloss/query",
-    OVERWRITE: "http://tinymatt.rerum.io/gloss/overwrite",
-    SINCE: "http://store.rerum.io/v1/since"
+    BASE_ID: "//store.rerum.io/v1",
+    CREATE: "//tinymatt.rerum.io/gloss/create",
+    UPDATE: "//tinymatt.rerum.io/gloss/update",
+    QUERY: "//tinymatt.rerum.io/gloss/query",
+    OVERWRITE: "//tinymatt.rerum.io/gloss/overwrite",
+    SINCE: "//store.rerum.io/v1/since"
 }
 // Render is probably needed by all items, but can be removed.
 // CDN at https://centerfordigitalhumanities.github.io/deer/releases/

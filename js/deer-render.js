@@ -39,6 +39,7 @@ async function renderChange(mutationsList) {
                     obj = JSON.parse(localStorage.getItem(id))
                 } catch (err) { }
                 if (!obj || !obj["@id"]) {
+                    id = id.replace(/^https?:/,location.protocol) // avoid mixed content
                     obj = await fetch(id).then(response => response.json()).catch(error => error)
                     if (obj) {
                         localStorage.setItem(obj["@id"] || obj.id, JSON.stringify(obj))
@@ -172,7 +173,7 @@ DEER.TEMPLATES.thumbs = function (obj, options = {}) {
     return {
         html: obj["tpen://base-project"] ? `<div class="is-full-width"> <h3> ... loading images ... </h3> </div>` : ``,
         then: (elem) => {
-            fetch("http://t-pen.org/TPEN/manifest/" + obj["tpen://base-project"].value)
+            fetch("//t-pen.org/TPEN/manifest/" + obj["tpen://base-project"].value)
                 .then(response => response.json())
                 .then(ms => elem.innerHTML = `
                 ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `<img class="thumbnail" src="${b.images[0].resource['@id']}">`, ``)}
@@ -190,7 +191,7 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
         html: obj.tpenProject ? `<div class="is-full-width"> <h3> ... loading preview ... </h3> </div>` : ``,
         then: (elem) => {
             const url = obj.tpenProject[0]?.value ?? obj.tpenProject.value
-            fetch("http://t-pen.org/TPEN/manifest/" + url)
+            fetch("//t-pen.org/TPEN/manifest/" + url)
                 .then(response => response.json())
                 .then(ms => elem.innerHTML = `
                 ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `
@@ -1154,14 +1155,14 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                             target: id,
                             "__rerum.history.next": historyWildcard
                         }
-                        fetch("http://tinymatt.rerum.io/gloss/query", {
+                        fetch("//tinymatt.rerum.io/gloss/query", {
                             method: "POST",
                             body: JSON.stringify(queryObj)
                         })
                             .then(r => r.ok ? r.json() : Promise.reject(new Error(r?.text)))
                             .then(annos => {
                                 let all = annos.map(anno => {
-                                    return fetch("http://tinymatt.rerum.io/gloss/delete", {
+                                    return fetch("//tinymatt.rerum.io/gloss/delete", {
                                         method: "DELETE",
                                         body: anno["@id"],
                                         headers: {
@@ -1377,6 +1378,7 @@ export default class DeerRender {
                 throw err
             } else {
                 if (this.id) {
+                    this.id = this.id.replace(/^https?:/,location.protocol) // avoid mixed content
                     limiter(() => fetch(this.id).then(response => response.json()).then(obj => RENDER.element(this.elem, obj)).catch(err => err))
                 } else if (this.collection) {
                     // Look not only for direct objects, but also collection annotations

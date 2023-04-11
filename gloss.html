@@ -44,10 +44,10 @@
                 rel="external"><img alt="external link"
                     src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg=="></a>
             <p id="copyGloss" class="card col-12 bg-light">
-                Log into <a rel="noopener noreferrer" target="_blank" href="http://t-pen.org">TPEN</a> in a
+                Log into <a rel="noopener noreferrer" target="_blank" href="//t-pen.org">TPEN</a> in a
                 new tab. Once you have confirmed you are logged in, you may
                 <a id="copyLink" rel="noopener noreferrer" target="_blank"
-                    href="http://t-pen.org/TPEN/index.jsp?makeCopy=true&projectID=">make a copy</a>
+                    href="//t-pen.org/TPEN/index.jsp?makeCopy=true&projectID=">make a copy</a>
                 for this gloss. The page should open to an empty tab.
                 <br>
                 Reload your TPEN page to find the new project in your list and
@@ -124,13 +124,13 @@
             thisMS.setAttribute("href", "./ms.html#" + msid)
             folioRange.setAttribute("deer-id", glossid)
             frPreview.setAttribute("deer-id", glossid)
-            fetch("http://tinymatt.rerum.io/gloss/query", {
+            fetch("//tinymatt.rerum.io/gloss/query", {
                 method: "POST",
                 body: JSON.stringify({
                     "body.partOf.value": msid
                 })
             }).then(r => r.json())
-                .then(annotations => Promise.all(annotations.map(anno => fetch(anno.target).then(res => res.json()))))
+                .then(annotations => Promise.all(annotations.map(anno => fetch(anno.target.replace(/^https?:/,location.protocol)).then(res => res.json()))))
                 .then(matches => {
                     var html = ``
                     matches.filter(a => a.__deleted === undefined).map(gloss => {
@@ -141,8 +141,8 @@
                 })
             document.querySelector("[deer-key='partOf']").setAttribute("value", msid)
             document.querySelector("input[deer-key='tpen://base-project']").addEventListener('input', e => {
-                copyLink.setAttribute("href", "http://t-pen.org/TPEN/index.jsp?makeCopy=true&projectID=" + e.target.value)
-                document.querySelector("a[deer-key='tpen://base-project']").setAttribute("href", "http://t-pen.org/TPEN/project.jsp?projectID=" + e.target.value)
+                copyLink.setAttribute("href", "//t-pen.org/TPEN/index.jsp?makeCopy=true&projectID=" + e.target.value)
+                document.querySelector("a[deer-key='tpen://base-project']").setAttribute("href", "//t-pen.org/TPEN/project.jsp?projectID=" + e.target.value)
             })
             const glossProjectInput = document.querySelector("input[deer-key='tpenProject']")
             if (!glossProjectInput.value) {
@@ -164,7 +164,7 @@
                 } catch (err) {
                     manifest = event.detail["tpen://base-project"].value
                 }
-                manifest = isNaN(manifest) ? manifest : "http://t-pen.org/TPEN/manifest/" + manifest
+                manifest = isNaN(manifest) ? manifest : "//t-pen.org/TPEN/manifest/" + manifest
                 if (!manifest) { return }
                 fetch(manifest).then(response => response.json()).then(m => {
                     let canvases = []
@@ -203,7 +203,7 @@
                 gloss.reset()
                 let id = gloss.getAttribute("deer-id")
                 if (id.length === 0) throw "new form"
-                fetch("http://tinymatt.rerum.io/gloss/delete", {
+                fetch("//tinymatt.rerum.io/gloss/delete", {
                     method: "DELETE",
                     body: id,
                     headers: {
