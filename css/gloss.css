@@ -298,3 +298,11 @@ line.selected.just {
     opacity: 0;
   }
 }
+
+auth-button {
+    position: absolute;
+    display: block;
+    text-align: right;
+    padding: 0px 20px 0px 0px !important;
+    z-index: 1;
+}

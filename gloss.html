@@ -10,6 +10,9 @@
 
 <body class="container">
     <gm-header>
+        <auth-button class="container">
+            <button is="auth-button" disabled>login</button>
+        </auth-button>
         <img src="media/gm-logo.png" alt="logo">
         <div class="tabs">
             <a href="./index.html">🏠</a>
@@ -18,10 +21,6 @@
 
             <a href="./ms.html" id="thisMS">📖 This Manuscript</a>
         </div>
-        <auth-button class="container">
-            <button is="auth-button">login</button>
-        </auth-button>
-
     </gm-header>
     <div id="pageRanges"></div>
     <form id="folioRange" deer-type="Range" deer-motivation="bookmarking"
