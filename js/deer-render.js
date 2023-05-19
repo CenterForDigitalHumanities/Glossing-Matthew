@@ -1064,7 +1064,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
 }
 
 DEER.TEMPLATES.managedlist = function (obj, options = {}) {
-    if(!userHasRole(["glossing_user_manager", "glossing_user_contributor", "glossing_user_public"])) { return `<h4 class="text-error">This function is limited to registered Glossing Matthew users.</h4>` }
+    if(!userHasRole(["glossing_user_manager", "glossing_user_contributor", "glossing_user_public"])) { return `<h4 class="text-error">This function is limited to registered Glossing Matthew managers.</h4>` }
     try {
         let tmpl = `<input type="hidden" deer-collection="${options.collection}">`
         if (options.list) {
