@@ -421,7 +421,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                 const historyWildcard = { $exists: true, $type: 'array', $eq: [] }
                 const query = {
                     motivation: "linking",
-                    'partOf.id': location.hash.substr(1),
+                    'partOf.id': httpsIdArray(location.hash.substr(1)),
                     '__rerum.history.next': historyWildcard
                 }
 
@@ -703,7 +703,7 @@ DEER.TEMPLATES.lines_new = function (obj, options = {}) {
                 const historyWildcard = { $exists: true, $type: 'array', $eq: [] }
 
                 const query = {
-                    forCanvas: c['@id'],
+                    forCanvas: httpsIdArray(c['@id']),
                     motivation: "classifying",
                     'body.location': { $exists: true },
                     '__rerum.history.next': historyWildcard
@@ -984,7 +984,7 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                 const historyWildcard = { $exists: true, $type: 'array', $eq: [] }
 
                 const query = {
-                    target: c['@id'],
+                    target: httpsIdArray(['@id']),
                     motivation: "classifying",
                     'body.locations': { $exists: true },
                     '__rerum.history.next': historyWildcard
@@ -1152,17 +1152,17 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                             }, {
                                 "body.targetCollection": collection
                             }],
-                            target: id,
+                            target: httpsIdArray(id),
                             "__rerum.history.next": historyWildcard
                         }
-                        fetch("//tinymatt.rerum.io/gloss/query", {
+                        fetch("https://tinymatt.rerum.io/gloss/query", {
                             method: "POST",
                             body: JSON.stringify(queryObj)
                         })
                             .then(r => r.ok ? r.json() : Promise.reject(new Error(r?.text)))
                             .then(annos => {
                                 let all = annos.map(anno => {
-                                    return fetch("//tinymatt.rerum.io/gloss/delete", {
+                                    return fetch("https://tinymatt.rerum.io/gloss/delete", {
                                         method: "DELETE",
                                         body: anno["@id"],
                                         headers: {
@@ -1282,7 +1282,7 @@ DEER.TEMPLATES.person = function (obj, options = {}) {
 DEER.TEMPLATES.pageRanges = function (obj, options = {}) {
     return {
         then: (elem) => {
-            let queryObj = { "body.isPartOf.value": obj['@id'] }
+            let queryObj = { "body.isPartOf.value": httpsIdArray(obj['@id']) }
             fetch(DEER.URLS.QUERY, {
                 method: "POST",
                 mode: "cors",
@@ -1474,4 +1474,10 @@ export function initializeDeerViews(config) {
         //Failed 5 times at 100
         //Failed 0 times at 200
     })
+}
+
+function httpsIdArray(id,justArray) {
+    if (!id.startsWith("http")) return justArray ? [ id ] : id
+    if (id.startsWith("https://")) return justArray ? [ id, id.replace('https','http') ] : { $in: [ id, id.replace('https','http') ] }
+    return justArray ? [ id, id.replace('http','https') ] : { $in: [ id, id.replace('http','https') ] }
 }

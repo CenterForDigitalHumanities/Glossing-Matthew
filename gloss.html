@@ -123,10 +123,10 @@
             thisMS.setAttribute("href", "./ms.html#" + msid)
             folioRange.setAttribute("deer-id", glossid)
             frPreview.setAttribute("deer-id", glossid)
-            fetch("//tinymatt.rerum.io/gloss/query", {
+            fetch("https//tinymatt.rerum.io/gloss/query", {
                 method: "POST",
                 body: JSON.stringify({
-                    "body.partOf.value": msid
+                    "body.partOf.value": httpsIdArray(msid)
                 })
             }).then(r => r.json())
                 .then(annotations => Promise.all(annotations.map(anno => fetch(anno.target.replace(/^https?:/,location.protocol)).then(res => res.json()))))
@@ -202,7 +202,7 @@
                 gloss.reset()
                 let id = gloss.getAttribute("deer-id")
                 if (id.length === 0) throw "new form"
-                fetch("//tinymatt.rerum.io/gloss/delete", {
+                fetch("https://tinymatt.rerum.io/gloss/delete", {
                     method: "DELETE",
                     body: id,
                     headers: {
@@ -222,6 +222,12 @@
             let msg = noid
                 ? "You entered this page without a manuscript URI. Click OK to head back to the list."
                 : "The manuscript this gloss is from does not have a TPEN project associated with it."
+        }
+
+        function httpsIdArray(id,justArray) {
+            if (!id.startsWith("http")) return justArray ? [ id ] : id
+            if (id.startsWith("https://")) return justArray ? [ id, id.replace('https','http') ] : { $in: [ id, id.replace('https','http') ] }
+            return justArray ? [ id, id.replace('http','https') ] : { $in: [ id, id.replace('http','https') ] }
         }
 
     </script>
