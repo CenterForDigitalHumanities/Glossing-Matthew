@@ -173,7 +173,7 @@ DEER.TEMPLATES.thumbs = function (obj, options = {}) {
     return {
         html: obj["tpen://base-project"] ? `<div class="is-full-width"> <h3> ... loading images ... </h3> </div>` : ``,
         then: (elem) => {
-            fetch("//t-pen.org/TPEN/manifest/" + obj["tpen://base-project"].value)
+            fetch("https://t-pen.org/TPEN/manifest/" + obj["tpen://base-project"].value)
                 .then(response => response.json())
                 .then(ms => elem.innerHTML = `
                 ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `<img class="thumbnail" src="${b.images[0].resource['@id']}">`, ``)}
@@ -191,7 +191,7 @@ DEER.TEMPLATES.folioTranscription = function (obj, options = {}) {
         html: obj.tpenProject ? `<div class="is-full-width"> <h3> ... loading preview ... </h3> </div>` : ``,
         then: (elem) => {
             const url = obj.tpenProject[0]?.value ?? obj.tpenProject.value
-            fetch("//t-pen.org/TPEN/manifest/" + url)
+            fetch("https://t-pen.org/TPEN/manifest/" + url)
                 .then(response => response.json())
                 .then(ms => elem.innerHTML = `
                 ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `

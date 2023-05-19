@@ -45,7 +45,7 @@
                 Log into <a rel="noopener noreferrer" target="_blank" href="//t-pen.org">TPEN</a> in a
                 new tab. Once you have confirmed you are logged in, you may
                 <a id="copyLink" rel="noopener noreferrer" target="_blank"
-                    href="//t-pen.org/TPEN/index.jsp?makeCopy=true&projectID=">make a copy</a>
+                    href="https://t-pen.org/TPEN/index.jsp?makeCopy=true&projectID=">make a copy</a>
                 for this gloss. The page should open to an empty tab.
                 <br>
                 Reload your TPEN page to find the new project in your list and
@@ -122,7 +122,7 @@
             thisMS.setAttribute("href", "./ms.html#" + msid)
             folioRange.setAttribute("deer-id", glossid)
             frPreview.setAttribute("deer-id", glossid)
-            fetch("https//tinymatt.rerum.io/gloss/query", {
+            fetch("https://tinymatt.rerum.io/gloss/query", {
                 method: "POST",
                 body: JSON.stringify({
                     "body.partOf.value": httpsIdArray(msid)
@@ -139,8 +139,8 @@
                 })
             document.querySelector("[deer-key='partOf']").setAttribute("value", msid)
             document.querySelector("input[deer-key='tpen://base-project']").addEventListener('input', e => {
-                copyLink.setAttribute("href", "//t-pen.org/TPEN/index.jsp?makeCopy=true&projectID=" + e.target.value)
-                document.querySelector("a[deer-key='tpen://base-project']").setAttribute("href", "//t-pen.org/TPEN/project.jsp?projectID=" + e.target.value)
+                copyLink.setAttribute("href", "https://t-pen.org/TPEN/index.jsp?makeCopy=true&projectID=" + e.target.value)
+                document.querySelector("a[deer-key='tpen://base-project']").setAttribute("href", "https://t-pen.org/TPEN/project.jsp?projectID=" + e.target.value)
             })
             const glossProjectInput = document.querySelector("input[deer-key='tpenProject']")
             if (!glossProjectInput.value) {
@@ -162,7 +162,7 @@
                 } catch (err) {
                     manifest = event.detail["tpen://base-project"].value
                 }
-                manifest = isNaN(manifest) ? manifest : "//t-pen.org/TPEN/manifest/" + manifest
+                manifest = isNaN(manifest) ? manifest : "https://t-pen.org/TPEN/manifest/" + manifest
                 if (!manifest) { return }
                 fetch(manifest).then(response => response.json()).then(m => {
                     let canvases = []
