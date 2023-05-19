@@ -59,7 +59,8 @@ export default {
     TEMPLATES: {
         cat: (obj) => `<h5>${obj.name}</h5><img src="https://placekitten.com/300/150" style="width:100%;">`,
         msList: function (obj, options = {}) {
-            let tmpl = `<h2>Manuscripts</h2>`
+            if(!userHasRole(["glossing_user_manager", "glossing_user_contributor", "glossing_user_public"])) { return `<h4 class="text-error">This function is limited to registered Glossing Matthew users.</h4>` }
+            let tmpl = `<a href="./manage-mss.html" class="button">Manage Manuscript Glosses</a> <h2>Manuscripts</h2>`
             if (options.list) {
                 tmpl += `<ul>`
                 obj[options.list].forEach((val, index) => {
@@ -74,7 +75,8 @@ export default {
             return tmpl
         },
         ngList: function (obj, options = {}) {
-            let html = `<h2>Named Glosses</h2>
+            if(!userHasRole(["glossing_user_manager", "glossing_user_contributor", "glossing_user_public"])) { return `<h4 class="text-error">This function is limited to registered Glossing Matthew users.</h4>` }
+            let html = `<a href="./manage-glosses.html" class="button">Manage Named Glosses</a> <h2>Named Glosses</h2>
             <input type="text" placeholder="&hellip;Type to filter by incipit" class="is-hidden">`
             if (options.list) {
                 html += `<ul>`
@@ -131,4 +133,14 @@ export default {
         },
     },
     version: "alpha"
+}
+
+/**
+ * Checks array of stored roles for any of the roles provided.
+ * @param {Array} roles Strings of roles to check.
+ * @returns Boolean user has one of these roles.
+ */
+function userHasRole(roles){
+    if (!Array.isArray(roles)) { roles = [roles] }
+    return Boolean(window.GOG_USER?.["http://rerum.io/user_roles"]?.roles.filter(r=>roles.includes(r)).length)
 }
