@@ -367,8 +367,9 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
                                 target: page.getAttribute('deer-id'),
                                 motivation: "linking",
                                 '@type': "Annotation",
-                            }
-                        })
+                                creator : window.GOG_USER["http://store.rerum.io/agent"]                            }
+                        }),
+                        creator : window.GOG_USER["http://store.rerum.io/agent"] 
                     }
 
                     if (page.dataset.glossPages) {
@@ -657,7 +658,8 @@ DEER.TEMPLATES.lines_new = function (obj, options = {}) {
                         forCanvas: c["@id"],
                         body: { "location": margin},
                         motivation: "classifying",
-                        "locationing": true
+                        "locationing": true,
+                        creator : window.GOG_USER["http://store.rerum.io/agent"] 
                     }
                     const marginPromise = fetch(DEER.URLS.OVERWRITE, {
                             method: 'PUT',
@@ -752,7 +754,8 @@ DEER.TEMPLATES.lines_new = function (obj, options = {}) {
                                 target: [],
                                 body: { location: margin },
                                 motivation: "classifying",
-                                "locationing" : true
+                                "locationing" : true,
+                                creator : window.GOG_USER["http://store.rerum.io/agent"] 
                             }
                             console.log("I will create")
                             console.log(locationAnnotation)
@@ -947,7 +950,8 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                     "@context": "http://www.w3.org/ns/anno.jsonld",
                     target: c['@id'],
                     body: { locations: Object.fromEntries(locationMap.entries()) },
-                    motivation: "classifying"
+                    motivation: "classifying",
+                    creator : window.GOG_USER["http://store.rerum.io/agent"] 
                 }
                 fetch(DEER.URLS.OVERWRITE, {
                     method: 'PUT',
@@ -1016,7 +1020,8 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
                             "@context": "http://www.w3.org/ns/anno.jsonld",
                             target: c['@id'],
                             body: { locations: {} },
-                            motivation: "classifying"
+                            motivation: "classifying",
+                            creator : window.GOG_USER["http://store.rerum.io/agent"] 
                         }
 
                         fetch(DEER.URLS.CREATE, {
