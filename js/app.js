@@ -1,5 +1,6 @@
 import { default as DEER } from './deer-config.js'
 import { default as UTILS } from './deer-utils.js'
+import './layout.js'
 
 function globalFeedbackBlip(event, message, success) {
     globalFeedback.innerText = message
