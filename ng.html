@@ -37,8 +37,7 @@
             border-right: 1px dotted black;
             padding: 4px;
         }
-        
-        </style>
+    </style>
 </head>
 
 <body class="container">
@@ -102,7 +101,7 @@
     </pre> -->
 
     <gm-footer class="row">
-         
+
     </gm-footer>
 
     <div id="globalFeedback" class="card is-center"></div>
@@ -149,8 +148,8 @@
                     method: "DELETE",
                     body: collectorId,
                     headers: {
-                    "Content-Type": "application/json; charset=utf-8",
-                    "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Authorization": `Bearer ${window.GOG_USER.authorization}`
                     }
                 }).then(obj => {
                     location.href = "./named-glosses.html"

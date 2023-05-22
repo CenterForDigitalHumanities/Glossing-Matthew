@@ -19,5 +19,5 @@ function globalFeedbackBlip(event, message, success) {
 }
 
 document.addEventListener('deer-updated', event => {
-    globalFeedbackBlip(event, `Saving ${event.detail.name ? "'"+event.detail.name + "' " : ""}successful!`, true)
+    globalFeedbackBlip(event, `Saving ${event.detail.name ? "'" + event.detail.name + "' " : ""}successful!`, true)
 })

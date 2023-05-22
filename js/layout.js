@@ -15,10 +15,10 @@ export class GlossFooter extends HTMLElement {
         </a>
     </footer>
     `
-    constructor(){
+    constructor() {
         super()
         this.innerHTML = this.template
     }
 }
 
-customElements.define('gm-footer',GlossFooter)
+customElements.define('gm-footer', GlossFooter)

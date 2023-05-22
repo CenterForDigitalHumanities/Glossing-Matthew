@@ -74,7 +74,7 @@
         class="card bg-light is-hidden"><deer-view deer-template="entity" deer-listening="manuscript">current state</deer-view></pre>
 
     <gm-footer class="row">
-         
+
     </gm-footer>
 
     <div id="globalFeedback" class="card is-center"></div>
@@ -90,7 +90,7 @@
                     "body.partOf.value": httpsIdArray(msid)
                 })
             }).then(r => r.json())
-                .then(annotations => Promise.all(annotations.map(anno => fetch(anno.target.replace(/^https?:/,location.protocol)).then(res => res.json()))))
+                .then(annotations => Promise.all(annotations.map(anno => fetch(anno.target.replace(/^https?:/, location.protocol)).then(res => res.json()))))
                 .then(matches => {
                     var html = ``
                     matches.filter(a => a.__deleted === undefined).map(gloss => {
@@ -116,8 +116,8 @@
                     method: "DELETE",
                     body: collectorId,
                     headers: {
-                    "Content-Type": "application/json; charset=utf-8",
-                    "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Authorization": `Bearer ${window.GOG_USER.authorization}`
                     }
                 }).then(obj => {
                     location.href = "./manuscripts.html"
@@ -125,10 +125,10 @@
             }
         }
 
-        function httpsIdArray(id,justArray) {
-            if (!id.startsWith("http")) return justArray ? [ id ] : id
-            if (id.startsWith("https://")) return justArray ? [ id, id.replace('https','http') ] : { $in: [ id, id.replace('https','http') ] }
-            return justArray ? [ id, id.replace('http','https') ] : { $in: [ id, id.replace('http','https') ] }
+        function httpsIdArray(id, justArray) {
+            if (!id.startsWith("http")) return justArray ? [id] : id
+            if (id.startsWith("https://")) return justArray ? [id, id.replace('https', 'http')] : { $in: [id, id.replace('https', 'http')] }
+            return justArray ? [id, id.replace('http', 'https')] : { $in: [id, id.replace('http', 'https')] }
         }
     </script>
 </body>

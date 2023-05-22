@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-    
-    <head>
-        <title>Glossing Matthew</title>
-        <link rel="stylesheet" href="css/gloss.css">
-        <link href="favicon.ico" rel="icon" type="image/x-icon" />
-        <script src="/js/auth.js" type="module"></script>
-        <script src="js/deer.js" type="module"></script>
-        <script src="js/app.js" type="module"></script>
+
+<head>
+    <title>Glossing Matthew</title>
+    <link rel="stylesheet" href="css/gloss.css">
+    <link href="favicon.ico" rel="icon" type="image/x-icon" />
+    <script src="/js/auth.js" type="module"></script>
+    <script src="js/deer.js" type="module"></script>
+    <script src="js/app.js" type="module"></script>
 </head>
 
 <body class="container">
@@ -97,7 +97,7 @@
         class="card bg-light is-hidden"><deer-view id="frPreview" deer-template="entity">current state</deer-view></pre>
 
     <gm-footer>
-         
+
     </gm-footer>
     <div id="globalFeedback" class="card is-center"></div>
     <script>
@@ -117,7 +117,7 @@
                     "body.partOf.value": httpsIdArray(msid)
                 })
             }).then(r => r.json())
-                .then(annotations => Promise.all(annotations.map(anno => fetch(anno.target.replace(/^https?:/,location.protocol)).then(res => res.json()))))
+                .then(annotations => Promise.all(annotations.map(anno => fetch(anno.target.replace(/^https?:/, location.protocol)).then(res => res.json()))))
                 .then(matches => {
                     var html = ``
                     matches.filter(a => a.__deleted === undefined).map(gloss => {
@@ -194,8 +194,8 @@
                     method: "DELETE",
                     body: id,
                     headers: {
-                    "Content-Type": "application/json; charset=utf-8",
-                    "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Authorization": `Bearer ${window.GOG_USER.authorization}`
                     }
                 }).then(obj => {
                     broadcast(event, "deer-updated", gloss)
@@ -212,10 +212,10 @@
                 : "The manuscript this gloss is from does not have a TPEN project associated with it."
         }
 
-        function httpsIdArray(id,justArray) {
-            if (!id.startsWith("http")) return justArray ? [ id ] : id
-            if (id.startsWith("https://")) return justArray ? [ id, id.replace('https','http') ] : { $in: [ id, id.replace('https','http') ] }
-            return justArray ? [ id, id.replace('http','https') ] : { $in: [ id, id.replace('http','https') ] }
+        function httpsIdArray(id, justArray) {
+            if (!id.startsWith("http")) return justArray ? [id] : id
+            if (id.startsWith("https://")) return justArray ? [id, id.replace('https', 'http')] : { $in: [id, id.replace('https', 'http')] }
+            return justArray ? [id, id.replace('http', 'https')] : { $in: [id, id.replace('http', 'https')] }
         }
 
     </script>
