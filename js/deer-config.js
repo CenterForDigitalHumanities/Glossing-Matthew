@@ -57,7 +57,6 @@ export default {
      * or an HTML String.
      */
     TEMPLATES: {
-        cat: (obj) => `<h5>${obj.name}</h5><img src="https://placekitten.com/300/150" style="width:100%;">`,
         msList: function (obj, options = {}) {
             if(!userHasRole(["glossing_user_manager", "glossing_user_contributor", "glossing_user_public"])) { return `<h4 class="text-error">This function is limited to registered Glossing Matthew users.</h4>` }
             let tmpl = `<a href="./manage-mss.html" class="button">Manage Manuscript Glosses</a> <h2>Manuscripts</h2>`

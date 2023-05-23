@@ -33,16 +33,16 @@ async function renderChange(mutationsList) {
             case DEER.LINK:
             case DEER.LIST:
                 let id = mutation.target.getAttribute(DEER.ID)
-                if (id === "null" || mutation.target.getAttribute(DEER.COLLECTION)) return
+                if (id === "null" ?? mutation.target.getAttribute(DEER.COLLECTION)) return
                 let obj = {}
                 try {
                     obj = JSON.parse(localStorage.getItem(id))
                 } catch (err) { }
-                if (!obj || !obj["@id"]) {
+                if (!obj ?? !obj["@id"]) {
                     id = id.replace(/^https?:/,location.protocol) // avoid mixed content
                     obj = await fetch(id).then(response => response.json()).catch(error => error)
                     if (obj) {
-                        localStorage.setItem(obj["@id"] || obj.id, JSON.stringify(obj))
+                        localStorage.setItem(obj["@id"] ?? obj.id, JSON.stringify(obj))
                     } else {
                         return false
                     }
@@ -66,8 +66,8 @@ const RENDER = {}
 RENDER.element = function (elem, obj) {
 
     return UTILS.expand(obj).then(obj => {
-        let tmplName = elem.getAttribute(DEER.TEMPLATE) || (elem.getAttribute(DEER.COLLECTION) ? "list" : "json")
-        let template = DEER.TEMPLATES[tmplName] || DEER.TEMPLATES.json
+        let tmplName = elem.getAttribute(DEER.TEMPLATE) ?? (elem.getAttribute(DEER.COLLECTION) ? "list" : "json")
+        let template = DEER.TEMPLATES[tmplName] ?? DEER.TEMPLATES.json
         let options = {
             list: elem.getAttribute(DEER.LIST),
             link: elem.getAttribute(DEER.LINK),
@@ -109,7 +109,7 @@ RENDER.element = function (elem, obj) {
  * @param {Object} options additional properties to draw with the JSON
  */
 DEER.TEMPLATES.json = function (obj, options = {}) {
-    let indent = options.indent || 4
+    let indent = options.indent ?? 4
     let replacer = (k, v) => {
         if (DEER.SUPPRESS.indexOf(k) !== -1) return
         return v
@@ -128,12 +128,12 @@ DEER.TEMPLATES.json = function (obj, options = {}) {
  * @param {String} label The label to be displayed when drawn
  */
 DEER.TEMPLATES.prop = function (obj, options = {}) {
-    let key = options.key || "@id"
-    let prop = obj[key] || "[ undefined ]"
-    // let label = options.label || UTILS.getLabel(obj, prop)
+    let key = options.key ?? "@id"
+    let prop = obj[key] ?? "[ no value ]"
+    // let label = options.label ?? UTILS.getLabel(obj, prop)
     try {
-        // return `<span class="${prop}">${label}: ${UTILS.getValue(prop) || "[ undefined ]"}</span>`
-        return `<span class="${prop}">${UTILS.getValue(prop) || "[ undefined ]"}</span>`
+        // return `<span class="${prop}">${label}: ${UTILS.getValue(prop) ?? "[ undefined ]"}</span>`
+        return `<span class="${prop}">${UTILS.getValue(prop) ?? "[ no value ]"}</span>`
     } catch (err) {
         return null
     }
@@ -145,9 +145,9 @@ DEER.TEMPLATES.prop = function (obj, options = {}) {
  * @param {Object} options for lookup
  */
 DEER.TEMPLATES.label = function (obj, options = {}) {
-    let key = options.key || "@id"
-    let prop = obj[key] || "[ undefined ]"
-    let label = options.label || UTILS.getLabel(obj, prop)
+    let key = options.key ?? "@id"
+    let prop = obj[key] ?? "[ no value ]"
+    let label = options.label ?? UTILS.getLabel(obj, prop)
     try {
         return `${label}`
     } catch (err) {
@@ -176,7 +176,7 @@ DEER.TEMPLATES.thumbs = function (obj, options = {}) {
             fetch("https://t-pen.org/TPEN/manifest/" + obj["tpen://base-project"].value)
                 .then(response => response.json())
                 .then(ms => elem.innerHTML = `
-                ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `<img class="thumbnail" src="${b.images[0].resource['@id']}">`, ``)}
+                ${ms.sequences[0].canvases.slice(0, 10).reduce((a, b) => a += `<img class="thumbnail" src="${b.images[0].resource['@id']?.replace('full/full','full/,120')}">`, ``)}
         `)
         }
     }
@@ -1216,8 +1216,8 @@ DEER.TEMPLATES.entity = function (obj, options = {}) {
         let label = key
         let value = UTILS.getValue(obj[key], key)
         try {
-            if ((value.image || value.trim()).length > 0) {
-                list += (label === "depiction") ? `<img title="${label}" src="${value.image || value}" ${DEER.SOURCE}="${UTILS.getValue(obj[key].source, "citationSource")}">` : `<dt deer-source="${UTILS.getValue(obj[key].source, "citationSource")}">${label}</dt><dd>${value.image || value}</dd>`
+            if ((value.image ?? value.trim()).length > 0) {
+                list += (label === "depiction") ? `<img title="${label}" src="${value.image ?? value}" ${DEER.SOURCE}="${UTILS.getValue(obj[key].source, "citationSource")}">` : `<dt deer-source="${UTILS.getValue(obj[key].source, "citationSource")}">${label}</dt><dd>${value.image ?? value}</dd>`
             }
         } catch (err) {
             // Some object maybe or untrimmable somesuch
@@ -1225,7 +1225,7 @@ DEER.TEMPLATES.entity = function (obj, options = {}) {
             list += `<dt>${label}</dt>`
             if (Array.isArray(value)) {
                 value.forEach((v, index) => {
-                    let name = UTILS.getLabel(v, (v.type || v['@type'] || label + '' + index))
+                    let name = UTILS.getLabel(v, (v.type ?? v['@type'] ?? label + '' + index))
                     list += (v["@id"]) ? `<dd><a href="#${v["@id"]}">${name}</a></dd>` : `<dd ${DEER.SOURCE}="${UTILS.getValue(v.source, "citationSource")}">${UTILS.getValue(v)}</dd>`
                 })
             } else {
@@ -1235,7 +1235,7 @@ DEER.TEMPLATES.entity = function (obj, options = {}) {
                     value = {
                         value: value,
                         source: {
-                            citationSource: obj['@id'] || obj.id || "",
+                            citationSource: obj['@id'] ?? obj.id ?? "",
                             citationNote: "Primitive object from DEER",
                             comment: "Learn about the assembler for this object at https://github.com/CenterForDigitalHumanities/deer"
                         }
@@ -1243,8 +1243,8 @@ DEER.TEMPLATES.entity = function (obj, options = {}) {
                 }
                 let v = UTILS.getValue(value)
                 if (typeof v === "object") { v = UTILS.getLabel(v) }
-                if (v === "[ unlabeled ]") { v = v['@id'] || v.id || "[ complex value unknown ]" }
-                list += (value['@id']) ? `<dd ${DEER.SOURCE}="${UTILS.getValue(value.source, "citationSource")}"><a href="${options.link || ""}#${value['@id']}">${v}</a></dd>` : `<dd ${DEER.SOURCE}="${UTILS.getValue(value, "citationSource")}">${v}</dd>`
+                if (v === "[ unlabeled ]") { v = v['@id'] ?? v.id ?? "[ complex value unknown ]" }
+                list += (value['@id']) ? `<dd ${DEER.SOURCE}="${UTILS.getValue(value.source, "citationSource")}"><a href="${options.link ?? ""}#${value['@id']}">${v}</a></dd>` : `<dd ${DEER.SOURCE}="${UTILS.getValue(value, "citationSource")}">${v}</dd>`
             }
         }
     }
@@ -1257,7 +1257,7 @@ DEER.TEMPLATES.list = function (obj, options = {}) {
     if (options.list) {
         tmpl += `<ul>`
         obj[options.list].forEach((val, index) => {
-            let name = UTILS.getLabel(val, (val.type || val['@type'] || index))
+            let name = UTILS.getLabel(val, (val.type ?? val['@type'] ?? index))
             tmpl += (val["@id"] && options.link) ? `<li ${DEER.ID}="${val["@id"]}"><a href="${options.link}${val["@id"]}">${name}</a></li>` : `<li ${DEER.ID}="${val["@id"]}">${name}</li>`
         })
         tmpl += `</ul>`
@@ -1273,13 +1273,13 @@ DEER.TEMPLATES.list = function (obj, options = {}) {
 DEER.TEMPLATES.person = function (obj, options = {}) {
     try {
         let tmpl = `<h2>${UTILS.getLabel(obj)}</h2>`
-        let dob = DEER.TEMPLATES.prop(obj, { key: "birthDate", label: "Birth Date" }) || ``
-        let dod = DEER.TEMPLATES.prop(obj, { key: "deathDate", label: "Death Date" }) || ``
-        let famName = (obj.familyName && UTILS.getValue(obj.familyName)) || "[ unknown ]"
-        let givenName = (obj.givenName && UTILS.getValue(obj.givenName)) || ""
-        tmpl += (obj.familyName || obj.givenName) ? `<div>Name: ${famName}, ${givenName}</div>` : ``
+        let dob = DEER.TEMPLATES.prop(obj, { key: "birthDate", label: "Birth Date" }) ?? ``
+        let dod = DEER.TEMPLATES.prop(obj, { key: "deathDate", label: "Death Date" }) ?? ``
+        let famName = (obj.familyName && UTILS.getValue(obj.familyName)) ?? "[ unknown ]"
+        let givenName = (obj.givenName && UTILS.getValue(obj.givenName)) ?? ""
+        tmpl += (obj.familyName ?? obj.givenName) ? `<div>Name: ${famName}, ${givenName}</div>` : ``
         tmpl += dob + dod
-        tmpl += `<a href="#${obj["@id"]}">${name}</a>`
+        tmpl += `<a href="#${obj["@id"]}">JSON</a>`
         return tmpl
     } catch (err) {
         return null
