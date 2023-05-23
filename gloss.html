@@ -158,12 +158,12 @@
                     if (m.sequences) {
                         canvases = m.sequences[0].canvases
                     } else if (m.items) {
-                        canvases = m.items.filter(item => (item.type === "Canvas" || item["@type"] === "Canvas"))
+                        canvases = m.items.filter(item => (item.type === "Canvas" ?? item["@type"] === "Canvas"))
                         // a little dumb right now, since the pages might be in the wrong order
                     }
                     return canvases.map(c => {
-                        let id = c['@id'] || c.id
-                        let label = (c.label['@none'] && c.label['@none'][0]) || (c.label.en && c.label.en[0]) || c.label.value || c.label['@value'] || c.label
+                        let id = c['@id'] ?? c.id
+                        let label = (c.label['@none'] && c.label['@none'][0]) ?? (c.label.en && c.label.en[0]) ?? c.label.value ?? c.label['@value'] ?? c.label
                         return {
                             id: id,
                             label: label

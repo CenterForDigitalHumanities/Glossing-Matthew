@@ -30,11 +30,11 @@ async function renderChange(mutationsList) {
                 try {
                     obj = JSON.parse(localStorage.getItem(id))
                 } catch (err) { }
-                if (!obj || !obj["@id"]) {
+                if (!obj ?? !obj["@id"]) {
                     id = id.replace(/^https?:/,location.protocol) // avoid mixed content
                     obj = await fetch(id).then(response => response.json()).catch(error => error)
                     if (obj) {
-                        localStorage.setItem(obj["@id"] || obj.id, JSON.stringify(obj))
+                        localStorage.setItem(obj["@id"] ?? obj.id, JSON.stringify(obj))
                     } else {
                         return false
                     }
@@ -58,7 +58,7 @@ export default class DeerReport {
     constructor(elem, deer = {}) {
         for (let key in DEER) {
             if (typeof DEER[key] === "string") {
-                DEER[key] = deer[key] || config[key]
+                DEER[key] = deer[key] ?? config[key]
             } else {
                 DEER[key] = Object.assign(config[key], deer[key])
             }
@@ -112,8 +112,8 @@ export default class DeerReport {
                                 if (mapsToAnno) {
                                     el.setAttribute(DEER.SOURCE, UTILS.getValue(obj[deerKeyValue].source, "citationSource"))
                                 }
-                                let annoBodyObjectType = (typeof assertedValue === "object") ? assertedValue.type || assertedValue["@type"] || "" : ""
-                                let delim = el.getAttribute(DEER.ARRAYDELIMETER) || DEER.DELIMETERDEFAULT || ","
+                                let annoBodyObjectType = (typeof assertedValue === "object") ? assertedValue.type ?? assertedValue["@type"] ?? "" : ""
+                                let delim = el.getAttribute(DEER.ARRAYDELIMETER) ?? DEER.DELIMETERDEFAULT ?? ","
                                 let arrayOfValues = []
                                 if (Array.isArray(assertedValue)) {
                                     /**
@@ -291,9 +291,9 @@ export default class DeerReport {
             })
                 .map(input => {
                     let inputId = input.getAttribute(DEER.SOURCE)
-                    let creatorId = input.getAttribute(DEER.ATTRIBUTION) || this.attribution
-                    let motivation = input.getAttribute(DEER.MOTIVATION) || this.motivation
-                    let evidence = input.getAttribute(DEER.EVIDENCE) || this.evidence
+                    let creatorId = input.getAttribute(DEER.ATTRIBUTION) ?? this.attribution
+                    let motivation = input.getAttribute(DEER.MOTIVATION) ?? this.motivation
+                    let evidence = input.getAttribute(DEER.EVIDENCE) ?? this.evidence
                     let action = (inputId) ? "UPDATE" : "CREATE"
                     let annotation = {
                         type: "Annotation",

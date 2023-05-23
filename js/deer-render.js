@@ -476,7 +476,7 @@ DEER.TEMPLATES.glossLines = function (obj, options = {}) {
 }
 
 DEER.TEMPLATES.osd = function (obj, options = {}) {
-    const index = options.index ?? folioLayout.getAttribute("deer-index") ?? 0
+    const index = options.index && !isNaN(options.index) ? options.index : 0
     const imgURL = obj.sequences[0].canvases[index].images[0].resource['@id']
     const bareImgTemplate = `<img alt="folio view" src="${imgURL}">`
     if (imgURL.includes("TPEN/pageImage")) {
@@ -505,7 +505,8 @@ DEER.TEMPLATES.osd = function (obj, options = {}) {
 
 DEER.TEMPLATES.lines_new = function (obj, options = {}) {
     if(!userHasRole(["glossing_user_manager", "glossing_user_contributor", "glossing_user_public"])) { return `<h4 class="text-error">This function is limited to registered Glossing Matthew users.</h4>` }
-    let c = obj.sequences[0].canvases[options.index ?? 0]
+    const index = options.index && !isNaN(options.index) ? options.index : 0
+    let c = obj.sequences[0].canvases[index]
     return {
         html: `
         <div class="page">
@@ -1307,7 +1308,7 @@ DEER.TEMPLATES.pageRanges = function (obj, options = {}) {
                 .then(response => response.json())
                 .then(pointers => {
                     let list = []
-                    pointers.map(tc => list.push(fetch(tc.target || tc["@id"] || tc.id).then(response => response.json().catch(err => { __deleted: console.log(err) }))))
+                    pointers.map(tc => list.push(fetch(tc.target ?? tc["@id"] ?? tc.id).then(response => response.json().catch(err => { __deleted: console.log(err) }))))
                     return Promise.all(list).then(l => l.filter(i => !i.hasOwnProperty("__deleted")))
                 })
                 .then(pages => pages.reduce((a, b) => b += `<deer-view deer-id="${a['@id'] ?? a.id}" deer-template="gloss">range</deer-view>`, ``))
@@ -1371,7 +1372,7 @@ export default class DeerRender {
     constructor(elem, deer = {}) {
         for (let key in DEER) {
             if (typeof DEER[key] === "string") {
-                DEER[key] = deer[key] || config[key]
+                DEER[key] = deer[key] ?? config[key]
             } else {
                 DEER[key] = Object.assign(config[key], deer[key])
             }
@@ -1385,7 +1386,7 @@ export default class DeerRender {
         this.elem = elem
 
         try {
-            if (!(this.id || this.collection)) {
+            if (!(this.id ?? this.collection)) {
                 let err = new Error(this.id + " is not a valid id.")
                 err.code = "NO_ID"
                 throw err
@@ -1429,7 +1430,7 @@ export default class DeerRender {
                                 listObj.itemListElement = listObj.itemListElement.concat(list.map(anno => ({ '@id': anno.target ?? anno["@id"] ?? anno.id })))
                                 this.elem.setAttribute(DEER.LIST, "itemListElement")
                                 try {
-                                    listObj["@type"] = list[0]["@type"] || list[0].type || "ItemList"
+                                    listObj["@type"] = list[0]["@type"] ?? list[0].type ?? "ItemList"
                                 } catch (err) { }
                                 if (list.length ?? (list.length % lim === 0)) {
                                     return getPagedQuery.bind(this)(lim, it + list.length)
