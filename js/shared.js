@@ -20,7 +20,8 @@ async function removeFromCollectionAndDelete(event, collection, type) {
     if (!id || !confirm(`Really delete this ${thing}?\n(Cannot be undone)`)) return
 
     const allAnnotationsTargetingEntityQueryObj = {
-        target: httpsIdArray(id)
+        target: httpsIdArray(id),
+        "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd")
     }
     let allAnnotations = await fetch(DEER.URLS.QUERY, {
         method: "POST",

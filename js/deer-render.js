@@ -1168,7 +1168,8 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
 
                     const historyWildcard = { "$exists": true, "$eq": [] }
                     const allAnnotationsTargetingEntityQueryObj = {
-                        target: httpsIdArray(id)
+                        target: httpsIdArray(id),
+                        "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd")
                     }
                     let allAnnotations = await fetch(DEER.URLS.QUERY, {
                         method: "POST",
@@ -1192,7 +1193,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                             //The target of each of these Annotations is the Gloss (range) that needs to be deleted.  This happens only when deleting a manuscript.
                             const allGlossesOfManuscriptQueryObj = {
                                 "body.partOf.value": httpsIdArray(id),
-                                "__rerum.history.next": historyWildcard
+                                "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd")
                             }
                             let allGlossIds = await fetch(DEER.URLS.QUERY, {
                                 method: "POST",
