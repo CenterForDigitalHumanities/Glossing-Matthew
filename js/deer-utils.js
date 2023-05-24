@@ -105,14 +105,14 @@ export default {
         let UTILS = this
         return (obj, noLabel = "[ unlabeled ]", options = {}) => {
             if (typeof obj === "string") { return obj }
-            let label = obj[options.label] || obj.name || obj.label || obj.title || obj.displayLabel
+            let label = obj[options.label] ?? obj.name ?? obj.label ?? obj.title ?? obj.displayLabel
             if (Array.isArray(label)) {
                 label = [...new Set(label.map(l => this.getValue(l)))]
             }
             if (typeof label === "object") {
                 label = UTILS.getValue(label)
             }
-            return label || noLabel
+            return label ?? noLabel
         }
     },
     /**
@@ -122,13 +122,13 @@ export default {
      */
     async expand(entity, matchOn = ["__rerum.generatedBy", "creator"]) {
         let UTILS = this
-        let findId = entity["@id"] || entity.id || entity
+        let findId = entity["@id"] ?? entity.id ?? entity
         if (typeof findId !== "string") {
             UTILS.warning("Unable to find URI in object:", entity)
             return entity
         }
         let getVal = UTILS.getValue
-        return fetch(findId.replace(/^https?:/,location.protocol)).then(response => response.json())
+        return fetch(findId.replace(/^https?:/,'https:')).then(response => response.json())
             .then(obj => UTILS.findByTargetId(findId)
                 .then(function (annos) {
                     for (let i = 0; i < annos.length; i++) {
@@ -270,13 +270,13 @@ export default {
          */
         function buildValueObject(val, fromAnno) {
             let valueObject = {}
-            valueObject.source = val.source || {
-                citationSource: fromAnno["@id"] || fromAnno.id,
-                citationNote: fromAnno.label || fromAnno.name || "Composed object from DEER",
+            valueObject.source = val.source ?? {
+                citationSource: fromAnno["@id"] ?? fromAnno.id,
+                citationNote: fromAnno.label ?? fromAnno.name ?? "Composed object from DEER",
                 comment: "Learn about the assembler for this object at https://github.com/CenterForDigitalHumanities/deer"
             }
-            valueObject.value = val.value || getVal(val)
-            valueObject.evidence = val.evidence || fromAnno.evidence || ""
+            valueObject.value = val.value ?? getVal(val)
+            valueObject.evidence = val.evidence ?? fromAnno.evidence ?? ""
             return valueObject
         }
     },
@@ -402,7 +402,7 @@ export default {
                 break
             }
         }
-        let objType = containerObj.type || containerObj["@type"] || ""
+        let objType = containerObj.type ?? containerObj["@type"] ?? ""
         let arrKey = (inputElem !== null && inputElem.hasAttribute(DEER.LIST)) ? inputElem.getAttribute(DEER.LIST) : ""
         if (Array.isArray(objType)) {
             //Since type can be an array we have to pick one of the values that matches one of our supported container types.

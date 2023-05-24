@@ -50,7 +50,7 @@
             let params = (new URL(document.location)).searchParams
             let glossid = window.location.hash.substr(1)
             document.querySelectorAll(".send-id").forEach(el => el.setAttribute("deer-id", glossid))
-            let page = parseInt(params.get("page")) || 1
+            let page = parseInt(params.get("page")) ?? 1
             folioLayout.setAttribute("deer-index", page - 1)
         }
 
