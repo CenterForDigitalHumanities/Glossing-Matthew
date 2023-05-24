@@ -33,13 +33,13 @@ async function renderChange(mutationsList) {
             case DEER.LINK:
             case DEER.LIST:
                 let id = mutation.target.getAttribute(DEER.ID)
-                if (id === "null" ?? mutation.target.getAttribute(DEER.COLLECTION)) return
+                if (id === null ?? mutation.target.getAttribute(DEER.COLLECTION)) return
                 let obj = {}
                 try {
                     obj = JSON.parse(localStorage.getItem(id))
                 } catch (err) { }
-                if (!obj ?? !obj["@id"]) {
-                    id = id.replace(/^https?:/,location.protocol) // avoid mixed content
+                if (!obj?.["@id"]) {
+                    id = id.replace(/^https?:/,'https:') // avoid mixed content
                     obj = await fetch(id).then(response => response.json()).catch(error => error)
                     if (obj) {
                         localStorage.setItem(obj["@id"] ?? obj.id, JSON.stringify(obj))
@@ -1392,7 +1392,7 @@ export default class DeerRender {
                 throw err
             } else {
                 if (this.id) {
-                    this.id = this.id.replace(/^https?:/,location.protocol) // avoid mixed content
+                    this.id = this.id.replace(/^https?:/,'https:') // avoid mixed content
                     limiter(() => fetch(this.id).then(response => response.json()).then(obj => RENDER.element(this.elem, obj)).catch(err => err))
                 } else if (this.collection) {
                     // Look not only for direct objects, but also collection annotations
