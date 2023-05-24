@@ -1200,7 +1200,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                                 headers: {
                                     "Content-Type": "application/json; charset=utf-8"
                                 },
-                                body: JSON.stringify(allAnnotationsTargetingEntityQueryObj)
+                                body: JSON.stringify(allGlossesOfManuscriptQueryObj)
                             })
                             .then(resp => resp.json())
                             .then(annos => annos.map(anno => anno.target))

@@ -44,14 +44,15 @@ async function removeFromCollectionAndDelete(event, collection, type) {
             // This manuscript has Ranges that represent Glosses of it.  Remove those Ranges too.
             //The target of each of these Annotations is the Gloss (range) that needs to be deleted.  This happens only when deleting a manuscript.
             const allGlossesOfManuscriptQueryObj = {
-                "body.partOf.value": httpsIdArray(id)
+                "body.partOf.value": httpsIdArray(id),
+                "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd")
             }
             let allGlossIds = await fetch(DEER.URLS.QUERY, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json; charset=utf-8"
                 },
-                body: JSON.stringify(allAnnotationsTargetingEntityQueryObj)
+                body: JSON.stringify(allGlossesOfManuscriptQueryObj)
             })
             .then(resp => resp.json())
             .then(annos => annos.map(anno => anno.target))
