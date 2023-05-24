@@ -1,5 +1,9 @@
 /**
  * An archetype entity is being deleted.  Delete it and some choice Annotations connected to it.
+ * 
+ * Might want to update the name of this to be delete from collection instead of delete this
+ * 
+ * 
  * @param event {Event} A button/link click event
  * @param collection {String} The name of the collection the entity belongs to, if any
  * @param type {String} The archtype object's type or @type.
@@ -18,14 +22,29 @@ function deleteThis(event, collection, type) {
         case "manuscript":
             // Such as ' [ Pn ] Paris, BnF, lat. 17233 ''
             id = location.hash.substr(1) // The manuscript URI
+
+            // Collection Anno
+            // The manuscript itself
+            // named-gloss also goes away
+            // Metadata Annos
+
         break
         case "named-gloss":
             // Such as ' Loco et animo '
+
+            // Collection Anno
+            // The named-gloss itself
+            // Likely to have unique annos pointing at it, so delete those as well
+            // Metdata Annos
 
         break
         case "Range":
             // A "Gloss", such as ' Pn Mt 5 Marginal '
 
+            // Collection Anno?
+            // The range itself
+            // Keep the items within the range
+            // Connected Annotations
         break
     }
     if (confirm(`Really remove this ${type}?\n(Cannot be undone)`)) {
