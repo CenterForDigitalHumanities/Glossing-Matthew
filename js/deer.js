@@ -9,24 +9,8 @@
  * especially within the Eventities model.
  * @see tiny.rerum.io
  */
-
-// Identify an alternate config location or only overwrite some items below.
 import { default as DEER } from './deer-config.js'
 
-// Overwrite or add certain values to the configuration to customize.
-
-// new template
-DEER.TEMPLATES.cat = (obj) => `<h5>${obj.name}</h5><img src="https://placekitten.com/300/150" style="width:100%;">`
-
-// sandbox repository URLS
-DEER.URLS = {
-    BASE_ID: "https://store.rerum.io/v1",
-    CREATE: "https://tinymatt.rerum.io/gloss/create",
-    UPDATE: "https://tinymatt.rerum.io/gloss/update",
-    QUERY: "https://tinymatt.rerum.io/gloss/query",
-    OVERWRITE: "https://tinymatt.rerum.io/gloss/overwrite",
-    SINCE: "https://store.rerum.io/v1/since"
-}
 // Render is probably needed by all items, but can be removed.
 // CDN at https://centerfordigitalhumanities.github.io/deer/releases/
 import { default as renderer, initializeDeerViews } from './deer-render.js'

@@ -90,7 +90,7 @@
                     "body.partOf.value": httpsIdArray(msid)
                 })
             }).then(r => r.json())
-                .then(annotations => Promise.all(annotations.map(anno => fetch(anno.target.replace(/^https?:/, location.protocol)).then(res => res.json()))))
+                .then(annotations => Promise.all(annotations.map(anno => fetch(anno.target.replace(/^https?:/, 'https:')).then(res => res.json()))))
                 .then(matches => {
                     var html = ``
                     matches.filter(a => a.__deleted === undefined).map(gloss => {
