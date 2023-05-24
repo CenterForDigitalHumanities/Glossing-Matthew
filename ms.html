@@ -5,9 +5,10 @@
     <title>Glossing Matthew</title>
     <link rel="stylesheet" href="css/gloss.css">
     <link href="favicon.ico" rel="icon" type="image/x-icon" />
-    <script src="/js/auth.js" type="module"></script>
+    <script src="js/auth.js" type="module"></script>
     <script src="js/deer.js" type="module"></script>
     <script src="js/app.js" type="module"></script>
+    <script src="js/shared.js"></script>
 </head>
 
 <body class="container">
@@ -59,7 +60,7 @@
             <input type="text" deer-key="notes" placeholder="notes" class="col-9 col-4-md">
         </div>
         <input type="submit" value="update" class="col">
-        <a href="./manuscripts.html" onclick="deleteThis(event, 'Glossing-Matthew', 'manuscript')" class="text-error">Drop from collection</a>
+        <a href="./manuscripts.html" onclick="removeFromCollectionAndDelete(event, 'Glossing-Matthew', 'manuscript')" class="text-error">Drop from collection</a>
     </form>
 
     <div class="col">
@@ -78,7 +79,6 @@
     </gm-footer>
 
     <div id="globalFeedback" class="card is-center"></div>
-    <script src="js/shared.js" type="javascript"></script>
     <script>
         window.onhashchange = onload = () => {
             let msid = window.location.hash.substr(1)

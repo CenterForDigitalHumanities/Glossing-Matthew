@@ -8,71 +8,60 @@
  * @param collection {String} The name of the collection the entity belongs to, if any
  * @param type {String} The archtype object's type or @type.
  */ 
-function deleteThis(event, collection, type) {
+async function removeFromCollectionAndDelete(event, collection, type) {
     event.preventDefault()
     // Hold up not ready need to decide what artifacts need to be deleted.
     return
 
-    // Confirm they want to do this
-    if (!confirm(`Really delete this ${type}?\n(Cannot be undone)`)) return
+    // The URI for the item itself from the location hash, or null b/c it isn't available.
+    const id = location.hash ? location.hash.substr(1) : null
 
-    let id = ""
-    //Determine which entities should be queried for to be deleted based on the archtype entity being deleted.
+    // Confirm they want to do this
+    if (!id || !confirm(`Really delete this ${thing}?\n(Cannot be undone)`)) return
+
+    const allAnnotationsTargetingEntityQueryObj = {
+        target: httpsIdArray(id)
+    }
+    let allAnnotations = await fetch(DEER.URLS.QUERY, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        body: JSON.stringify(allAnnotationsTargetingEntityQueryObj)
+    })
+    .then(resp => resp.json())
+    .catch(err => {
+        alert("Could not gather Annotations for this Entity.")
+        throw err
+    })
+
+    let redirect = ""
+    let thing = ""
     switch(type){
         case "manuscript":
             // Such as ' [ Pn ] Paris, BnF, lat. 17233 ''
-            id = location.hash.substr(1) // The manuscript URI
-
-            // Collection Anno
-            // The manuscript itself
-            // named-gloss also goes away
-            // Metadata Annos
-
-        break
-        case "named-gloss":
-            // Such as ' Loco et animo '
-
-            // Collection Anno
-            // The named-gloss itself
-            // Likely to have unique annos pointing at it, so delete those as well
-            // Metdata Annos
-
-        break
-        case "Range":
-            // A "Gloss", such as ' Pn Mt 5 Marginal '
-
-            // Collection Anno?
-            // The range itself
-            // Keep the items within the range
-            // Connected Annotations
-        break
-    }
-    if (confirm(`Really remove this ${type}?\n(Cannot be undone)`)) {
-        
-        // Note there exist Named Glosses, Glosses, and Gloss Alignments for this manuscript.  Should those be deleted?
-        const historyWildcard = { "$exists": true, "$eq": [] }
-        const queryObj = {
-            $or: [{
-                "targetCollection": collection
-            }, {
-                "body.targetCollection": collection
-            }],
-            target: httpsIdArray(id),
-            "__rerum.history.next": historyWildcard
-        }
-        fetch(DEER.URLS.QUERY, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json; charset=utf-8"
-            },
-            body: JSON.stringify(queryObj)
-        })
-        .then(resp => resp.json())
-        .then(annos => {
-            let all = annos.map(anno => {
+            // This manuscript has Ranges that represent Glosses of it.  Remove those Ranges too.
+            //The target of each of these Annotations is the Gloss (range) that needs to be deleted.  This happens only when deleting a manuscript.
+            const allGlossesOfManuscriptQueryObj = {
+                "body.partOf.value": httpsIdArray(id)
+            }
+            let allGlossIds = await fetch(DEER.URLS.QUERY, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8"
+                },
+                body: JSON.stringify(allAnnotationsTargetingEntityQueryObj)
+            })
+            .then(resp => resp.json())
+            .then(annos => annos.map(anno => anno.target))
+            .catch(err => {
+                alert("Could not gather Glosses to delete.")
+                throw err
+            })
+            const allGlosses = allGlossIds.map(glossUri => {
                 return fetch(DEER.URLS.DELETE, {
                     method: "DELETE",
-                    body: anno,
+                    body: JSON.stringify({"@id":glossUri}),
                     headers: {
                         "Content-Type": "application/json; charset=utf-8",
                         "Authorization": `Bearer ${window.GOG_USER.authorization}`
@@ -80,24 +69,73 @@ function deleteThis(event, collection, type) {
                 })
                 .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
                 .catch(err => { 
-                    alert("There was an issue removing this item.  Refresh the page and try again.")
-                    throw err
+                    console.warn("There was an issue removing an Annotation.")
+                    console.log(err)
                 })
             })
-            Promise.all(all).then(success => {
-                location.href = "./named-glosses.html"
+            // Wait for these to delete before moving on.  If the page finishes and redirects before this is done, that would be a bummer.
+            // If one or more fails, keep going and try to delete the manuscript anyway.
+            await Promise.all(allGlosses).then(success => {
+                console.log("Connected Manuscript Glosses successfully removeD.")
             })
             .catch(err => {
-                alert("There was an issue removing this item.  Refresh the page and try again.")
-                throw err
+                console.warn("There was an issue removing connected Glosses.")
+                console.log(err)
             })
-
+            redirect = "./manuscripts.html"
+            thing = "Manuscript"
+        break
+        case "named-gloss":
+            // Such as ' Loco et animo '
+            redirect = "./named-glosses.html"
+            thing = "Named Gloss"
+        break
+        case "Range":
+            // A "Gloss", such as ' Pn Mt 5 Marginal '
+            redirect = "./manage-glosses.html"
+            thing = "Gloss"
+        break
+        default:
+            console.warn(`Not sure what a ${thing} is...`)
+    }
+           
+    fetch(DEER.URLS.QUERY, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        body: JSON.stringify(allAnnotationsTargetingEntityQueryObj)
+    })
+    .then(resp => resp.json())
+    .then(annos => {
+        const allAnnos = annos.map(anno => {
+            return fetch(DEER.URLS.DELETE, {
+                method: "DELETE",
+                body: anno,
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                }
+            })
+            .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
+            .catch(err => { 
+                console.warn("There was an issue removing an Annotation.")
+                console.log(err)
+            })
+        })
+        Promise.all(allAnnos).then(success => {
+            alert("This item has been successfully deleted.  You will be redirected.")
+            location.href = redirect
         })
         .catch(err => {
-            alert("There was an issue removing this item.  Refresh the page and try again.")
-            throw err
+            console.warn("There was an issue removing Annotations.")
+            console.log(err)
         })
-    }
+    })
+    .catch(err => {
+        alert("There was an issue removing this item.  Refresh the page and try again.")
+        throw err
+    })
 }
 
 function getURLParameter(variable) {
@@ -114,4 +152,9 @@ function httpsIdArray(id, justArray) {
     if (!id.startsWith("http")) return justArray ? [id] : id
     if (id.startsWith("https://")) return justArray ? [id, id.replace('https', 'http')] : { $in: [id, id.replace('https', 'http')] }
     return justArray ? [id, id.replace('http', 'https')] : { $in: [id, id.replace('http', 'https')] }
+}
+
+function broadcast(event = {}, type, element, obj = {}) {
+    let e = new CustomEvent(type, { detail: Object.assign(obj, { target: event.target }), bubbles: true })
+    element.dispatchEvent(e)
 }
