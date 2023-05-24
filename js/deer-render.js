@@ -1167,23 +1167,23 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                             target: httpsIdArray(id),
                             "__rerum.history.next": historyWildcard
                         }
-                        fetch("https://tinymatt.rerum.io/gloss/query", {
+                        fetch(DEER.URLS.QUERY, {
                             method: "POST",
                             body: JSON.stringify(queryObj)
                         })
                             .then(r => r.ok ? r.json() : Promise.reject(new Error(r?.text)))
                             .then(annos => {
                                 let all = annos.map(anno => {
-                                    return fetch("https://tinymatt.rerum.io/gloss/delete", {
+                                    return fetch(DEER.URLS.DELETE, {
                                         method: "DELETE",
-                                        body: anno["@id"],
+                                        body: anno,
                                         headers: {
                                         "Content-Type": "application/json; charset=utf-8",
                                         "Authorization": `Bearer ${window.GOG_USER.authorization}`
                                         }
                                     })
-                                        .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
-                                        .catch(err => { throw err })
+                                    .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
+                                    .catch(err => { throw err })
                                 })
                                 Promise.all(all).then(success => {
                                     document.querySelector(`[deer-id="${id}"]`).closest("li").remove()

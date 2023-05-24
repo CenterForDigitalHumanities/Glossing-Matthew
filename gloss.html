@@ -183,6 +183,7 @@
             element.dispatchEvent(e)
         }
 
+        
         function deleteThis(event) {
             event.preventDefault()
             try {
@@ -192,7 +193,7 @@
                 if (id.length === 0) throw "new form"
                 fetch("https://tinymatt.rerum.io/gloss/delete", {
                     method: "DELETE",
-                    body: id,
+                    body: JSON.stringify({"@id":id}),
                     headers: {
                         "Content-Type": "application/json; charset=utf-8",
                         "Authorization": `Bearer ${window.GOG_USER.authorization}`
