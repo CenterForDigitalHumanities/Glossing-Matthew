@@ -60,7 +60,7 @@ async function removeFromCollectionAndDelete(event, type) {
         const allGlosses = allGlossIds.map(glossUri => {
             return fetch("https://tinymatt.rerum.io/gloss/delete", {
                 method: "DELETE",
-                body: JSON.stringify({"@id":glossUri}),
+                body: JSON.stringify({"@id":glossUri.replace(/^https?:/,'https:')}),
                 headers: {
                     "Content-Type": "application/json; charset=utf-8",
                     "Authorization": `Bearer ${window.GOG_USER.authorization}`
@@ -98,7 +98,7 @@ async function removeFromCollectionAndDelete(event, type) {
     const allAnnotations = allAnnotationIds.map(annoUri => {
         return fetch("https://tinymatt.rerum.io/gloss/delete", {
             method: "DELETE",
-            body: JSON.stringify({"@id":annoUri}),
+            body: JSON.stringify({"@id":annoUri.replace(/^https?:/,'https:')}),
             headers: {
                 "Content-Type": "application/json; charset=utf-8",
                 "Authorization": `Bearer ${window.GOG_USER.authorization}`
