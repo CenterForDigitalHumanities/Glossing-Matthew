@@ -1072,11 +1072,16 @@ DEER.TEMPLATES.lines = function (obj, options = {}) {
 DEER.TEMPLATES.managedlist = function (obj, options = {}) {
     if(!userHasRole(["glossing_user_manager", "glossing_user_contributor", "glossing_user_public"])) { return `<h4 class="text-error">This function is limited to registered Glossing Matthew managers.</h4>` }
     try {
+        // If the collection doesn't have a name, something has gone wrong.
+        if(!obj.name) return
+
         let tmpl = `<input type="hidden" deer-collection="${options.collection}">`
+        const type = obj.name.includes("Named-Glosses") ? "named-gloss" : "manuscript"
+
         if (options.list) {
             tmpl += `<ul>`
             obj[options.list].forEach((val, index) => {
-                const removeBtn = `<a href="${val['@id']}" class="removeCollectionItem" title="Delete This Entry">&#x274C</a>`
+                const removeBtn = `<a href="${val['@id']}" data-type="${type}" class="removeCollectionItem" title="Delete This Entry">&#x274C</a>`
                 const visibilityBtn = `<a class="togglePublic" href="${val['@id']}" title="Toggle public visibility"> 👁 </a>`
                 tmpl += `<li>
                 ${visibilityBtn}
@@ -1110,8 +1115,8 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                             ev.preventDefault()
                             ev.stopPropagation()
                             const itemID = el.getAttribute("href")
-                            const fromCollection = document.querySelector('input[deer-collection]').getAttribute("deer-collection")
-                            removeFromCollectionAndDelete(itemID, fromCollection)
+                            const itemType = el.getAttribute("data-type")
+                            removeFromCollectionAndDelete(itemID, itemType)
                         }))
                         document.querySelectorAll('.togglePublic').forEach(a => a.addEventListener('click', ev => {
                             ev.preventDefault()
@@ -1156,18 +1161,13 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                         .catch(err => alert(`Failed to save: ${err}`))
                 }
 
-                function removeFromCollectionAndDelete(id, collection) {
+                function removeFromCollectionAndDelete(id, type) {
                     if (confirm("Really remove this record?\n(Cannot be undone)")) {
-                        const historyWildcard = { "$exists": true, "$eq": [] }
                         const queryObj = {
                             target: httpsIdArray(id),
                             "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd")
                         }
-                        fetch(DEER.URLS.QUERY, {
-                            method: "POST",
-                            body: JSON.stringify(queryObj)
-                        })
-                            .then(r => r.ok ? r.json() : Promise.reject(new Error(r?.text)))
+                        getPagedQuery
                             .then(annos => {
                                 let all = annos.map(anno => {
                                     return fetch(DEER.URLS.DELETE, {
@@ -1500,4 +1500,27 @@ function httpsIdArray(id,justArray) {
     if (!id.startsWith("http")) return justArray ? [ id ] : id
     if (id.startsWith("https://")) return justArray ? [ id, id.replace('https','http') ] : { $in: [ id, id.replace('https','http') ] }
     return justArray ? [ id, id.replace('http','https') ] : { $in: [ id, id.replace('http','https') ] }
+}
+
+function getPagedQuery(lim, it = 0, queryObj, allResults = []) {
+    return fetch(`https://tinymatt.rerum.io/gloss/query?limit=${lim}&skip=${it}`, {
+        method: "POST",
+        mode: "cors",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        body: JSON.stringify(queryObj)
+    })
+    .then(response => response.json())
+    .then(results => {
+        if (results.length) {
+            allResults.concat(results)
+            return getPagedQuery(lim, it + results.length, queryObj, allResults)
+        }
+        return allResults
+    })
+    .catch(err => {
+        console.warn("Could not process a result in paged query")
+        throw err
+    })
 }

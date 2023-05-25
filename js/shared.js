@@ -5,115 +5,61 @@
  * 
  * 
  * @param event {Event} A button/link click event
- * @param collection {String} The name of the collection the entity belongs to, or null if none
  * @param type {String} The archtype object's type or @type.
  */ 
-async function removeFromCollectionAndDelete(event, collection=null, type) {
+async function removeFromCollectionAndDelete(event, type) {
     event.preventDefault()
     // Hold up not ready need to decide what artifacts need to be deleted.
     return
 
     // The URI for the item itself from the location hash, or null b/c it isn't available.
     const id = location.hash ? location.hash.substr(1) : null
+    const thing = 
+        (type === "manuscript") ? "Manuscript" :
+        (type === "named-gloss") ? "Named Gloss" :
+        (type === "Range") ? "Gloss" : null
+    const redirect = 
+        (type === "manuscript") ? "./manuscripts.html" :
+        (type === "named-gloss") ? "./named-glosses.html" :
+        (type === "Range") ? "./manage-glosses" : null    
+
+    // This won't do    
+    if(id === null){
+        alert(`No URI supplied for delete.  Cannot delete.`)
+        return
+    }
+
+    // If it is an unexpected type, we probably shouldn't go through with the delete.
+    if(thing === null){
+        alert(`Not sure what a ${type} is.  Cannot delete.`)
+        return
+    }
 
     // Confirm they want to do this
-    if (!id || !confirm(`Really delete this ${thing}?\n(Cannot be undone)`)) return
+    if (!confirm(`Really delete this ${thing}?\n(Cannot be undone)`)) return
 
-    const allAnnotationsTargetingEntityQueryObj = {
-        target: httpsIdArray(id),
-        "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd")
-    }
-    let allAnnotations = await fetch(DEER.URLS.QUERY, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
-        },
-        body: JSON.stringify(allAnnotationsTargetingEntityQueryObj)
-    })
-    .then(resp => resp.json())
-    .catch(err => {
-        alert("Could not gather Annotations for this Entity.")
-        throw err
-    })
+    /**
+     * A customized delete functionality for manuscripts, since they have Annotations and Glosses.
+     */ 
+    if(type==="manuscript"){
+        // Such as ' [ Pn ] Paris, BnF, lat. 17233 ''
 
-    let redirect = ""
-    let thing = ""
-    switch(type){
-        case "manuscript":
-            // Such as ' [ Pn ] Paris, BnF, lat. 17233 ''
-            // This manuscript has Ranges that represent Glosses of it.  Remove those Ranges too.
-            //The target of each of these Annotations is the Gloss (range) that needs to be deleted.  This happens only when deleting a manuscript.
-            const allGlossesOfManuscriptQueryObj = {
-                "body.partOf.value": httpsIdArray(id),
-                "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd")
-            }
-            let allGlossIds = await fetch(DEER.URLS.QUERY, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json; charset=utf-8"
-                },
-                body: JSON.stringify(allGlossesOfManuscriptQueryObj)
-            })
-            .then(resp => resp.json())
-            .then(annos => annos.map(anno => anno.target))
-            .catch(err => {
-                alert("Could not gather Glosses to delete.")
-                throw err
-            })
-            const allGlosses = allGlossIds.map(glossUri => {
-                return fetch(DEER.URLS.DELETE, {
-                    method: "DELETE",
-                    body: JSON.stringify({"@id":glossUri}),
-                    headers: {
-                        "Content-Type": "application/json; charset=utf-8",
-                        "Authorization": `Bearer ${window.GOG_USER.authorization}`
-                    }
-                })
-                .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
-                .catch(err => { 
-                    console.warn("There was an issue removing an Annotation.")
-                    console.log(err)
-                })
-            })
-            // Wait for these to delete before moving on.  If the page finishes and redirects before this is done, that would be a bummer.
-            // If one or more fails, keep going and try to delete the manuscript anyway.
-            await Promise.all(allGlosses).then(success => {
-                console.log("Connected Manuscript Glosses successfully removeD.")
-            })
-            .catch(err => {
-                console.warn("There was an issue removing connected Glosses.")
-                console.log(err)
-            })
-            redirect = "./manuscripts.html"
-            thing = "Manuscript"
-        break
-        case "named-gloss":
-            // Such as ' Loco et animo '
-            redirect = "./named-glosses.html"
-            thing = "Named Gloss"
-        break
-        case "Range":
-            // A "Gloss", such as ' Pn Mt 5 Marginal '
-            redirect = "./manage-glosses.html"
-            thing = "Gloss"
-        break
-        default:
-            console.warn(`Not sure what a ${type} is...`)
-    }
-           
-    fetch(DEER.URLS.QUERY, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
-        },
-        body: JSON.stringify(allAnnotationsTargetingEntityQueryObj)
-    })
-    .then(resp => resp.json())
-    .then(annos => {
-        const allAnnos = annos.map(anno => {
-            return fetch(DEER.URLS.DELETE, {
+        const allGlossesOfManuscriptQueryObj = {
+            "body.partOf.value": httpsIdArray(id),
+            "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd"),
+            "__rerum.history.next" : historyWildcard
+        }
+        let allGlossIds = await getPagedQuery(allGlossesOfManuscriptQueryObj)
+        .then(annos => annos.map(anno => anno.target))
+        .catch(err => {
+            alert("Could not gather Glosses to delete.")
+            // Error out, we won't be able to rely on this for the actual delete.
+            throw err
+        })
+        const allGlosses = allGlossIds.map(glossUri => {
+            return fetch("https://tinymatt.rerum.io/gloss/delete", {
                 method: "DELETE",
-                body: anno,
+                body: JSON.stringify({"@id":glossUri}),
                 headers: {
                     "Content-Type": "application/json; charset=utf-8",
                     "Authorization": `Bearer ${window.GOG_USER.authorization}`
@@ -125,17 +71,34 @@ async function removeFromCollectionAndDelete(event, collection=null, type) {
                 console.log(err)
             })
         })
-        Promise.all(allAnnos).then(success => {
-            alert("This item has been successfully deleted.  You will be redirected.")
-            location.href = redirect
+        // Wait for these to delete before moving on.  If the page finishes and redirects before this is done, that would be a bummer.
+        // If one or more fails, keep going so we can try to delete the manuscript anyway.
+        await Promise.all(allGlosses).then(success => {
+            console.log("Connected Manuscript Glosses successfully removed.")
         })
         .catch(err => {
-            console.warn("There was an issue removing Annotations.")
+            console.warn("There was an issue removing connected Glosses.")
             console.log(err)
         })
+    }
+
+    // Get all Annotations throughout history targeting this object that were generated by this application.
+    const allAnnotationsTargetingEntityQueryObj = {
+        target: httpsIdArray(id),
+        "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd")
+    }
+    const allAnnotations = await getPagedQuery(allAnnotationsTargetingEntityQueryObj)
+    .then(annos => annos.map(anno => anno.target))
+    .catch(err => {
+        alert("Could not gather Annotations to delete.")
+        // Error out, this is an unreliable situation.
+        throw err
+    })
+    Promise.all(allAnnotations).then(success => {
+        console.log("Connected Annotationss successfully removed.")
     })
     .catch(err => {
-        alert("There was an issue removing this item.  Refresh the page and try again.")
+        console.warn("There was an issue removing connected Annotations.")
         throw err
     })
 }
@@ -165,6 +128,29 @@ function alertReturn(noid) {
     let msg = noid
         ? "You entered this page without a manuscript URI. Click OK to head back to the list."
         : "The manuscript this gloss is from does not have a TPEN project associated with it."
+}
+
+function getPagedQuery(lim, it = 0, queryObj, allResults = []) {
+    return fetch(`https://tinymatt.rerum.io/gloss/query?limit=${lim}&skip=${it}`, {
+        method: "POST",
+        mode: "cors",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        body: JSON.stringify(queryObj)
+    })
+    .then(response => response.json())
+    .then(results => {
+        if (results.length) {
+            allResults.concat(results)
+            return getPagedQuery(lim, it + results.length, queryObj, allResults)
+        }
+        return allResults
+    })
+    .catch(err => {
+        console.warn("Could not process a result in paged query")
+        throw err
+    })
 }
 
 /** Auth */
