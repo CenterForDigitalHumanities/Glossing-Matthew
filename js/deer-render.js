@@ -1161,34 +1161,103 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                         .catch(err => alert(`Failed to save: ${err}`))
                 }
 
-                function removeFromCollectionAndDelete(id, type) {
-                    if (confirm("Really remove this record?\n(Cannot be undone)")) {
-                        const queryObj = {
-                            target: httpsIdArray(id),
-                            "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd")
-                        }
-                        getPagedQuery
-                            .then(annos => {
-                                let all = annos.map(anno => {
-                                    return fetch(DEER.URLS.DELETE, {
-                                        method: "DELETE",
-                                        body: anno["@id"],
-                                        headers: {
-                                        "Content-Type": "application/json; charset=utf-8",
-                                        "Authorization": `Bearer ${window.GOG_USER.authorization}`
-                                        }
-                                    })
-                                        .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
-                                        .catch(err => { throw err })
-                                })
-                                Promise.all(all).then(success => {
-                                    document.querySelector(`[deer-id="${id}"]`).closest("li").remove()
-                                })
-                            })
-                            .catch(err => console.error(`Failed to delete: ${err}`))
-                    }
-                }
+                /**
+                 * An archetype entity is being deleted.  Delete it and some choice Annotations connected to it.
+                 * 
+                 * Might want to update the name of this to be delete from collection instead of delete this
+                 * 
+                 * 
+                 * @param event {Event} A button/link click event
+                 * @param type {String} The archtype object's type or @type.
+                 */ 
+                async function removeFromCollectionAndDelete(id, type) {
+                    event.preventDefault()
+                    // Hold up not ready need to decide what artifacts need to be deleted.
+                    return
 
+                    // This won't do 
+                    if(!id){
+                        alert(`No URI supplied for delete.  Cannot delete.`)
+                        return
+                    }
+                    const thing = 
+                        (type === "manuscript") ? "Manuscript" :
+                        (type === "named-gloss") ? "Named Gloss" :
+                        (type === "Range") ? "Gloss" : null
+
+                    // If it is an unexpected type, we probably shouldn't go through with the delete.
+                    if(thing === null){
+                        alert(`Not sure what a ${type} is.  Cannot delete.`)
+                        return
+                    }
+
+                    // Confirm they want to do this
+                    if (!confirm(`Really delete this ${thing}?\n(Cannot be undone)`)) return
+
+                    /**
+                     * A customized delete functionality for manuscripts, since they have Annotations and Glosses.
+                     */ 
+                    if(type==="manuscript"){
+                        // Such as ' [ Pn ] Paris, BnF, lat. 17233 ''
+
+                        const allGlossesOfManuscriptQueryObj = {
+                            "body.partOf.value": httpsIdArray(id),
+                            "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd"),
+                            "__rerum.history.next" : historyWildcard
+                        }
+                        let allGlossIds = await pagedQuery(allGlossesOfManuscriptQueryObj)
+                        .then(annos => annos.map(anno => anno.target))
+                        .catch(err => {
+                            alert("Could not gather Glosses to delete.")
+                            // Error out, we won't be able to rely on this for the actual delete.
+                            throw err
+                        })
+                        const allGlosses = allGlossIds.map(glossUri => {
+                            return fetch("https://tinymatt.rerum.io/gloss/delete", {
+                                method: "DELETE",
+                                body: JSON.stringify({"@id":glossUri}),
+                                headers: {
+                                    "Content-Type": "application/json; charset=utf-8",
+                                    "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                                }
+                            })
+                            .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
+                            .catch(err => { 
+                                console.warn("There was an issue removing an Annotation.")
+                                console.log(err)
+                            })
+                        })
+                        // Wait for these to delete before moving on.  If the page finishes and redirects before this is done, that would be a bummer.
+                        // If one or more fails, keep going so we can try to delete the manuscript anyway.
+                        await Promise.all(allGlosses).then(success => {
+                            console.log("Connected Manuscript Glosses successfully removed.")
+                        })
+                        .catch(err => {
+                            console.warn("There was an issue removing connected Glosses.")
+                            console.log(err)
+                        })
+                    }
+
+                    // Get all Annotations throughout history targeting this object that were generated by this application.
+                    const allAnnotationsTargetingEntityQueryObj = {
+                        target: httpsIdArray(id),
+                        "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd")
+                    }
+                    const allAnnotations = await pagedQuery(allAnnotationsTargetingEntityQueryObj)
+                    .then(annos => annos.map(anno => anno.target))
+                    .catch(err => {
+                        alert("Could not gather Annotations to delete.")
+                        // Error out, this is an unreliable situation as the entity may not be removed from the collection.
+                        throw err
+                    })
+                    Promise.all(allAnnotations).then(success => {
+                        console.log("Connected Annotationss successfully removed.")
+                    })
+                    .catch(err => {
+                        console.warn("There was an issue removing connected Annotations.")
+                        throw err
+                    })
+                }
             }
         }
     } catch (err) {
@@ -1502,8 +1571,9 @@ function httpsIdArray(id,justArray) {
     return justArray ? [ id, id.replace('http','https') ] : { $in: [ id, id.replace('http','https') ] }
 }
 
-function getPagedQuery(lim, it = 0, queryObj, allResults = []) {
-    return fetch(`https://tinymatt.rerum.io/gloss/query?limit=${lim}&skip=${it}`, {
+function pagedQuery(lim, it = 0, queryObj, allResults = []) {
+    const q = DEER.URLS.QUERY.replace("?limit=100&skip=0", "")
+    return fetch(`${q}?limit=${lim}&skip=${it}`, {
         method: "POST",
         mode: "cors",
         headers: {
@@ -1515,7 +1585,7 @@ function getPagedQuery(lim, it = 0, queryObj, allResults = []) {
     .then(results => {
         if (results.length) {
             allResults.concat(results)
-            return getPagedQuery(lim, it + results.length, queryObj, allResults)
+            return pagedQuery(lim, it + results.length, queryObj, allResults)
         }
         return allResults
     })
