@@ -1111,7 +1111,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                             ev.stopPropagation()
                             const itemID = el.getAttribute("href")
                             const fromCollection = document.querySelector('input[deer-collection]').getAttribute("deer-collection")
-                            removeFromCollectionAndDelete(itemID, fromCollection)
+                            deleteThis(itemID, fromCollection)
                         }))
                         document.querySelectorAll('.togglePublic').forEach(a => a.addEventListener('click', ev => {
                             ev.preventDefault()
@@ -1156,130 +1156,42 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                         .catch(err => alert(`Failed to save: ${err}`))
                 }
 
-                // The thing being removed is either a manuscript or a gloss
-                async function removeFromCollectionAndDelete(id, collection){
-                    event.preventDefault()
-                    // Hold up not ready need to decide what artifacts need to be deleted.
-                    return
-
-                    const type = collection.includes("Named-Glosses") ? "named-gloss" : "manuscript"
-                    // Confirm they want to do this
-                    if (!id || !confirm(`Really delete this ${thing}?\n(Cannot be undone)`)) return
-
-                    const historyWildcard = { "$exists": true, "$eq": [] }
-                    const allAnnotationsTargetingEntityQueryObj = {
-                        target: httpsIdArray(id),
-                        "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd")
-                    }
-                    let allAnnotations = await fetch(DEER.URLS.QUERY, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json; charset=utf-8"
-                        },
-                        body: JSON.stringify(allAnnotationsTargetingEntityQueryObj)
-                    })
-                    .then(resp => resp.json())
-                    .catch(err => {
-                        alert("Could not gather Annotations for this Entity.")
-                        throw err
-                    })
-
-                    let redirect = ""
-                    let thing = ""
-                    switch(type){
-                        case "manuscript":
-                            // Such as ' [ Pn ] Paris, BnF, lat. 17233 ''
-                            // This manuscript has Ranges that represent Glosses of it.  Remove those Ranges too.
-                            //The target of each of these Annotations is the Gloss (range) that needs to be deleted.  This happens only when deleting a manuscript.
-                            const allGlossesOfManuscriptQueryObj = {
-                                "body.partOf.value": httpsIdArray(id),
-                                "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd")
-                            }
-                            let allGlossIds = await fetch(DEER.URLS.QUERY, {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json; charset=utf-8"
-                                },
-                                body: JSON.stringify(allGlossesOfManuscriptQueryObj)
-                            })
-                            .then(resp => resp.json())
-                            .then(annos => annos.map(anno => anno.target))
-                            .catch(err => {
-                                alert("Could not gather Glosses to delete.")
-                                throw err
-                            })
-                            const allGlosses = allGlossIds.map(glossUri => {
-                                return fetch(DEER.URLS.DELETE, {
-                                    method: "DELETE",
-                                    body: JSON.stringify({"@id":glossUri}),
-                                    headers: {
+                function deleteThis(id, collection) {
+                    if (confirm("Really remove this record?\n(Cannot be undone)")) {
+                        const historyWildcard = { "$exists": true, "$eq": [] }
+                        const queryObj = {
+                            $or: [{
+                                "targetCollection": collection
+                            }, {
+                                "body.targetCollection": collection
+                            }],
+                            target: httpsIdArray(id),
+                            "__rerum.history.next": historyWildcard
+                        }
+                        fetch("https://tinymatt.rerum.io/gloss/query", {
+                            method: "POST",
+                            body: JSON.stringify(queryObj)
+                        })
+                            .then(r => r.ok ? r.json() : Promise.reject(new Error(r?.text)))
+                            .then(annos => {
+                                let all = annos.map(anno => {
+                                    return fetch("https://tinymatt.rerum.io/gloss/delete", {
+                                        method: "DELETE",
+                                        body: anno["@id"],
+                                        headers: {
                                         "Content-Type": "application/json; charset=utf-8",
                                         "Authorization": `Bearer ${window.GOG_USER.authorization}`
-                                    }
+                                        }
+                                    })
+                                        .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
+                                        .catch(err => { throw err })
                                 })
-                                .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
-                                .catch(err => { 
-                                    console.warn("There was an issue removing an Annotation.")
-                                    console.log(err)
+                                Promise.all(all).then(success => {
+                                    document.querySelector(`[deer-id="${id}"]`).closest("li").remove()
                                 })
                             })
-                            // Wait for these to delete before moving on.  If the page finishes and redirects before this is done, that would be a bummer.
-                            // If one or more fails, keep going and try to delete the manuscript anyway.
-                            await Promise.all(allGlosses).then(success => {
-                                console.log("Connected Manuscript Glosses successfully removeD.")
-                            })
-                            .catch(err => {
-                                console.warn("There was an issue removing connected Glosses.")
-                                console.log(err)
-                            })
-                            redirect = "./manuscripts.html"
-                            thing = "Manuscript"
-                        break
-                        case "named-gloss":
-                            // Such as ' Loco et animo '
-                            redirect = "./named-glosses.html"
-                            thing = "Named Gloss"
-                        break
-                        default:
-                            console.warn(`Not sure what a ${thing} is...`)
+                            .catch(err => console.error(`Failed to delete: ${err}`))
                     }
-                    fetch(DEER.URLS.QUERY, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json; charset=utf-8"
-                        },
-                        body: JSON.stringify(allAnnotationsTargetingEntityQueryObj)
-                    })
-                    .then(resp => resp.json())
-                    .then(annos => {
-                        const allAnnos = annos.map(anno => {
-                            return fetch(DEER.URLS.DELETE, {
-                                method: "DELETE",
-                                body: anno,
-                                headers: {
-                                    "Content-Type": "application/json; charset=utf-8",
-                                    "Authorization": `Bearer ${window.GOG_USER.authorization}`
-                                }
-                            })
-                            .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
-                            .catch(err => { 
-                                console.warn("There was an issue removing an Annotation.")
-                                console.log(err)
-                            })
-                        })
-                        Promise.all(allAnnos).then(success => {
-                            alert("This item has been successfully deleted.")
-                            document.querySelector(`[deer-id="${id}"]`).closest("li").remove()
-                        })
-                        .catch(err => {
-                            console.warn("There was an issue removing Annotations.")
-                            console.log(err)
-                        })
-                    })
-                    .catch(err => {
-                        alert("There was an issue removing this item.  Refresh the page and try again.")
-                        throw err
-                    })
                 }
 
             }
