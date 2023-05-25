@@ -1172,8 +1172,6 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                  */ 
                 async function removeFromCollectionAndDelete(id, type) {
                     event.preventDefault()
-                    // Hold up not ready need to decide what artifacts need to be deleted.
-                    return
 
                     // This won't do 
                     if(!id){
@@ -1185,6 +1183,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                         (type === "named-gloss") ? "Named Gloss" :
                         (type === "Range") ? "Gloss" : null
 
+
                     // If it is an unexpected type, we probably shouldn't go through with the delete.
                     if(thing === null){
                         alert(`Not sure what a ${type} is.  Cannot delete.`)
@@ -1194,6 +1193,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                     // Confirm they want to do this
                     if (!confirm(`Really delete this ${thing}?\n(Cannot be undone)`)) return
 
+                    const historyWildcard = { "$exists": true, "$size": 0 }
                     /**
                      * A customized delete functionality for manuscripts, since they have Annotations and Glosses.
                      */ 
@@ -1205,13 +1205,14 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                             "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd"),
                             "__rerum.history.next" : historyWildcard
                         }
-                        let allGlossIds = await pagedQuery(allGlossesOfManuscriptQueryObj)
+                        let allGlossIds = await pagedQuery(100, 0, allGlossesOfManuscriptQueryObj)
                         .then(annos => annos.map(anno => anno.target))
                         .catch(err => {
                             alert("Could not gather Glosses to delete.")
                             // Error out, we won't be able to rely on this for the actual delete.
                             throw err
                         })
+                        
                         const allGlosses = allGlossIds.map(glossUri => {
                             return fetch("https://tinymatt.rerum.io/gloss/delete", {
                                 method: "DELETE",
@@ -1243,12 +1244,28 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                         target: httpsIdArray(id),
                         "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd")
                     }
-                    const allAnnotations = await pagedQuery(allAnnotationsTargetingEntityQueryObj)
+                    const allAnnotationIds = await pagedQuery(100, 0, allAnnotationsTargetingEntityQueryObj)
                     .then(annos => annos.map(anno => anno.target))
                     .catch(err => {
                         alert("Could not gather Annotations to delete.")
                         // Error out, this is an unreliable situation as the entity may not be removed from the collection.
                         throw err
+                    })
+
+                    const allAnnotations = allAnnotationIds.map(annoUri => {
+                        return fetch("https://tinymatt.rerum.io/gloss/delete", {
+                            method: "DELETE",
+                            body: JSON.stringify({"@id":annoUri}),
+                            headers: {
+                                "Content-Type": "application/json; charset=utf-8",
+                                "Authorization": `Bearer ${window.GOG_USER.authorization}`
+                            }
+                        })
+                        .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
+                        .catch(err => { 
+                            console.warn("There was an issue removing an Annotation.")
+                            console.log(err)
+                        })
                     })
                     Promise.all(allAnnotations).then(success => {
                         console.log("Connected Annotationss successfully removed.")
@@ -1257,6 +1274,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                         console.warn("There was an issue removing connected Annotations.")
                         throw err
                     })
+                    
                 }
             }
         }
@@ -1584,7 +1602,7 @@ function pagedQuery(lim, it = 0, queryObj, allResults = []) {
     .then(response => response.json())
     .then(results => {
         if (results.length) {
-            allResults.concat(results)
+            allResults = allResults.concat(results)
             return pagedQuery(lim, it + results.length, queryObj, allResults)
         }
         return allResults

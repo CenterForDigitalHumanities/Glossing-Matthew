@@ -9,8 +9,6 @@
  */ 
 async function removeFromCollectionAndDelete(event, type) {
     event.preventDefault()
-    // Hold up not ready need to decide what artifacts need to be deleted.
-    return
 
     // The URI for the item itself from the location hash, or null b/c it isn't available.
     const id = location.hash ? location.hash.substr(1) : null
@@ -38,6 +36,8 @@ async function removeFromCollectionAndDelete(event, type) {
     // Confirm they want to do this
     if (!confirm(`Really delete this ${thing}?\n(Cannot be undone)`)) return
 
+    const historyWildcard = { "$exists": true, "$size": 0 }
+
     /**
      * A customized delete functionality for manuscripts, since they have Annotations and Glosses.
      */ 
@@ -49,13 +49,14 @@ async function removeFromCollectionAndDelete(event, type) {
             "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd"),
             "__rerum.history.next" : historyWildcard
         }
-        let allGlossIds = await getPagedQuery(allGlossesOfManuscriptQueryObj)
+        const allGlossIds = await getPagedQuery(100, 0, allGlossesOfManuscriptQueryObj)
         .then(annos => annos.map(anno => anno.target))
         .catch(err => {
             alert("Could not gather Glosses to delete.")
             // Error out, we won't be able to rely on this for the actual delete.
             throw err
         })
+
         const allGlosses = allGlossIds.map(glossUri => {
             return fetch("https://tinymatt.rerum.io/gloss/delete", {
                 method: "DELETE",
@@ -87,12 +88,27 @@ async function removeFromCollectionAndDelete(event, type) {
         target: httpsIdArray(id),
         "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd")
     }
-    const allAnnotations = await getPagedQuery(allAnnotationsTargetingEntityQueryObj)
+    const allAnnotationIds = await getPagedQuery(100, 0, allAnnotationsTargetingEntityQueryObj)
     .then(annos => annos.map(anno => anno.target))
     .catch(err => {
         alert("Could not gather Annotations to delete.")
         // Error out, this is an unreliable situation.
         throw err
+    })
+    const allAnnotations = allAnnotationIds.map(annoUri => {
+        return fetch("https://tinymatt.rerum.io/gloss/delete", {
+            method: "DELETE",
+            body: JSON.stringify({"@id":annoUri}),
+            headers: {
+                "Content-Type": "application/json; charset=utf-8",
+                "Authorization": `Bearer ${window.GOG_USER.authorization}`
+            }
+        })
+        .then(r => r.ok ? r.json() : Promise.reject(Error(r.text)))
+        .catch(err => { 
+            console.warn("There was an issue removing an Annotation.")
+            console.log(err)
+        })
     })
     Promise.all(allAnnotations).then(success => {
         console.log("Connected Annotationss successfully removed.")
@@ -142,7 +158,7 @@ function getPagedQuery(lim, it = 0, queryObj, allResults = []) {
     .then(response => response.json())
     .then(results => {
         if (results.length) {
-            allResults.concat(results)
+            allResults = allResults.concat(results)
             return getPagedQuery(lim, it + results.length, queryObj, allResults)
         }
         return allResults
@@ -176,3 +192,4 @@ function tokenHasRole(token,role) {
     const user = jwt_decode(token)
     return userHasRole(user, role)
 }
+*/
