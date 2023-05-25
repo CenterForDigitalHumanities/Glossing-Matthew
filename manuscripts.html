@@ -5,7 +5,7 @@
     <title>Glossing Matthew</title>
     <link rel="stylesheet" href="css/gloss.css">
     <link href="favicon.ico" rel="icon" type="image/x-icon" />
-    <script src="/js/auth.js" type="module"></script>
+    <!-- <script src="/js/auth.js" type="module"></script> -->
     <script src="js/deer.js" type="module"></script>
     <script src="js/app.js" type="module"></script>
 </head>
@@ -22,7 +22,7 @@
             <a href="./named-glosses.html">📑 Named Glosses</a>
         </div>
     </gm-header>
-    <form id="msForm" deer-type="manuscript" deer-context="http://www.loc.gov/mods" class="row">
+    <form id="msForm" deer-type="manuscript" deer-context="http://www.loc.gov/mods" class="row" data-user="contributor">
         <input is="auth-creator" type="hidden" deer-key="creator" />
         <input type="text" deer-key="title" placeholder="Display Label" class="col">
         <input type="hidden" deer-key="targetCollection" value="Glossing-Matthew">
