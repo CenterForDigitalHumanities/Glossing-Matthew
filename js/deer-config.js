@@ -1,4 +1,5 @@
 import deerUtils from "./deer-utils.js"
+import AuthButton from './auth.js'
 
 export default {
     ID: "deer-id", // attribute, URI for resource to render
