@@ -5,10 +5,10 @@
  * 
  * 
  * @param event {Event} A button/link click event
- * @param collection {String} The name of the collection the entity belongs to, if any
+ * @param collection {String} The name of the collection the entity belongs to, or null if none
  * @param type {String} The archtype object's type or @type.
  */ 
-async function removeFromCollectionAndDelete(event, collection, type) {
+async function removeFromCollectionAndDelete(event, collection=null, type) {
     event.preventDefault()
     // Hold up not ready need to decide what artifacts need to be deleted.
     return
@@ -98,7 +98,7 @@ async function removeFromCollectionAndDelete(event, collection, type) {
             thing = "Gloss"
         break
         default:
-            console.warn(`Not sure what a ${thing} is...`)
+            console.warn(`Not sure what a ${type} is...`)
     }
            
     fetch(DEER.URLS.QUERY, {
@@ -159,6 +159,12 @@ function httpsIdArray(id, justArray) {
 function broadcast(event = {}, type, element, obj = {}) {
     let e = new CustomEvent(type, { detail: Object.assign(obj, { target: event.target }), bubbles: true })
     element.dispatchEvent(e)
+}
+
+function alertReturn(noid) {
+    let msg = noid
+        ? "You entered this page without a manuscript URI. Click OK to head back to the list."
+        : "The manuscript this gloss is from does not have a TPEN project associated with it."
 }
 
 /** Auth */

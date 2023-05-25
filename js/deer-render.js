@@ -1111,7 +1111,7 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                             ev.stopPropagation()
                             const itemID = el.getAttribute("href")
                             const fromCollection = document.querySelector('input[deer-collection]').getAttribute("deer-collection")
-                            deleteThis(itemID, fromCollection)
+                            removeFromCollectionAndDelete(itemID, fromCollection)
                         }))
                         document.querySelectorAll('.togglePublic').forEach(a => a.addEventListener('click', ev => {
                             ev.preventDefault()
@@ -1156,26 +1156,21 @@ DEER.TEMPLATES.managedlist = function (obj, options = {}) {
                         .catch(err => alert(`Failed to save: ${err}`))
                 }
 
-                function deleteThis(id, collection) {
+                function removeFromCollectionAndDelete(id, collection) {
                     if (confirm("Really remove this record?\n(Cannot be undone)")) {
                         const historyWildcard = { "$exists": true, "$eq": [] }
                         const queryObj = {
-                            $or: [{
-                                "targetCollection": collection
-                            }, {
-                                "body.targetCollection": collection
-                            }],
                             target: httpsIdArray(id),
-                            "__rerum.history.next": historyWildcard
+                            "__rerum.generatedBy" : httpsIdArray("http://store.rerum.io/v1/id/61043ad4ffce846a83e700dd")
                         }
-                        fetch("https://tinymatt.rerum.io/gloss/query", {
+                        fetch(DEER.URLS.QUERY, {
                             method: "POST",
                             body: JSON.stringify(queryObj)
                         })
                             .then(r => r.ok ? r.json() : Promise.reject(new Error(r?.text)))
                             .then(annos => {
                                 let all = annos.map(anno => {
-                                    return fetch("https://tinymatt.rerum.io/gloss/delete", {
+                                    return fetch(DEER.URLS.DELETE, {
                                         method: "DELETE",
                                         body: anno["@id"],
                                         headers: {
@@ -1421,7 +1416,8 @@ export default class DeerRender {
                         })
 
                     function getPagedQuery(lim, it = 0) {
-                        return fetch(`${DEER.URLS.QUERY}?limit=${lim}&skip=${it}`, {
+                        const q = DEER.URLS.QUERY.replace("?limit=100&skip=0", "")
+                        return fetch(`${q}?limit=${lim}&skip=${it}`, {
                             method: "POST",
                             mode: "cors",
                             body: JSON.stringify(queryObj)

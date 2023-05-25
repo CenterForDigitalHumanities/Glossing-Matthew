@@ -93,7 +93,7 @@
         </div>
 
         <input type="submit" value="Create" class="col">
-        <a href="./named-glosses.html" onclick="deleteThis(event)" class="text-error">Drop from collection</a>
+        <a href="./named-glosses.html" onclick="removeFromCollectionAndDelete(event, 'Glossing-Matthew-Named-Glosses', 'named-gloss')" class="text-error">Drop from collection</a>
     </form>
     <!-- 
     <pre class="card bg-light is-hidden">
@@ -138,23 +138,6 @@
                 element.dispatchEvent(e)
             }
             //broadcast(undefined, "deer-view", document, {})
-        }
-
-        function deleteThis(event) {
-            event.preventDefault()
-            if (confirm("Really remove this named gloss?\n(Cannot be undone)")) {
-                let collectorId = document.querySelector('[deer-key="targetCollection"]').getAttribute("deer-source")
-                fetch("https://tinymatt.rerum.io/gloss/delete", {
-                    method: "DELETE",
-                    body: collectorId,
-                    headers: {
-                        "Content-Type": "application/json; charset=utf-8",
-                        "Authorization": `Bearer ${window.GOG_USER.authorization}`
-                    }
-                }).then(obj => {
-                    location.href = "./named-glosses.html"
-                })
-            }
         }
 
         /**
