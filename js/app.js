@@ -24,6 +24,8 @@ document.addEventListener('deer-updated', event => {
 
 
 /** Auth */
+/*
+
 const GLOSSING_USER_ROLES_CLAIM = "http://rerum.io/user_roles"
 const GOG_ADMIN = "glossing_user_admin"
 const GOG_CONTRIBUTOR = "glossing_user_contribustor"
@@ -45,12 +47,18 @@ function tokenHasRole(token,role) {
     return userHasRole(user, role)
 }
 
+*/
+
 /**
  * Checks array of stored roles for any of the roles provided.
  * @param {Array} roles Strings of roles to check.
  * @returns Boolean user has one of these roles.
  */
+/*
+
 function userHasRole(user, roles) {
     if (!Array.isArray(roles)) { roles = [roles] }
     return Boolean(user?.[GLOSSING_USER_ROLES_CLAIM]?.roles.filter(r => roles.includes(r)).length)
 }
+
+*/

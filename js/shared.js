@@ -160,3 +160,27 @@ function broadcast(event = {}, type, element, obj = {}) {
     let e = new CustomEvent(type, { detail: Object.assign(obj, { target: event.target }), bubbles: true })
     element.dispatchEvent(e)
 }
+
+/** Auth */
+/*
+
+const GLOSSING_USER_ROLES_CLAIM = "http://rerum.io/user_roles"
+const GOG_ADMIN = "glossing_user_admin"
+const GOG_CONTRIBUTOR = "glossing_user_contribustor"
+
+const auth = document.querySelector('[is="auth-button"]')
+
+auth.addEventListener("gog-authenticated", ev => {
+    if (document.querySelector("[data-user='admin']")) {
+        if( !tokenHasRole(ev.detail.authorization,GOG_ADMIN)){ document.querySelectorAll("[data-user='admin']").forEach(elem=>elem.replaceWith(`Restricted`)) }
+    }
+
+    if (document.querySelector("[data-user='contributor']")) {
+        if( !tokenHasRole(ev.detail.authorization,GOG_CONTRIBUTOR)){ document.querySelectorAll("[data-user='contributor']").forEach(elem=>elem.replaceWith(`Restricted`)) }
+    }
+})
+import jwt_decode from "./jwt.js"
+function tokenHasRole(token,role) {
+    const user = jwt_decode(token)
+    return userHasRole(user, role)
+}
